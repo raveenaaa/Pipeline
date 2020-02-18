@@ -1,0 +1,21 @@
+# Role that performs the installation of nodejs
+
+- name: Get the script to enable NodeSource repository
+  get_url:
+    url: "https://deb.nodesource.com/setup_10.x"
+    dest: "/tmp/nodejs.sh"
+
+- name: Set execution permission for nodejs.sh script
+  file:
+    path: "/tmp/nodejs.sh"
+    mode: "u+x"
+
+- name: Execute the script
+  become: yes
+  shell: "/tmp/nodejs.sh"
+
+- name: Install nodejs
+  become: yes
+  apt:
+    state: present
+    name: nodejs

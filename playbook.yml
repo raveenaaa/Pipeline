@@ -1,0 +1,6 @@
+# Main playbook that runs the 'Configure jenkins server task'
+
+- hosts: jenkins
+  roles:
+  - setup_nodejs
+  - setup_mongodb
