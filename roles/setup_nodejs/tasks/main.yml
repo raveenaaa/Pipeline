@@ -1,3 +1,4 @@
+---
 # Role that performs the installation of nodejs
 
 - name: Get the script to enable NodeSource repository
