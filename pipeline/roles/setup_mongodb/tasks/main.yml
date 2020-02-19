@@ -72,6 +72,7 @@
     name: mongo_user
     password: password
     state: present
+    roles: readWrite
 
 - name: Add the environment variables
   become: yes
