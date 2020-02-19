@@ -38,11 +38,14 @@
     state: latest
     update_cache: yes
 
-- name: Install pip3
+- name: Install pip, setuptools
   become: yes
   apt:
-    name: python3-pip
+    name: 
+    - python3-pip
+    - python-setuptools
     state: present
+    update_cache: yes
 
 - name: Install pymongo
   become: yes
@@ -52,11 +55,16 @@
 
 - name: Start the mongodb service
   become: yes
-  shell: systemctl start mongod
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: mongod
 
 - name: Enable the mongodb service
   become: yes
-  shell: systemctl enable mongod
+  systemd:
+    name: mongod
+    enabled: yes
 
 - name: Create mongo user
   mongodb_user:
