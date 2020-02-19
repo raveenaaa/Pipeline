@@ -1,0 +1,81 @@
+---
+# Role that sets up and configures mongodb 
+# We choose to install from site repository (mongodb-org) instead of Ubuntu repository
+# That way we get the latest version of mongodb
+# https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+
+- name: Install gnupg
+  become: yes
+  apt:
+    name: gnupg
+    state: present
+
+- name: Add key for mongo db from ubuntu keyserver
+  become: yes
+  apt_key:
+    keyserver: hkp://keyserver.ubuntu.com:80
+    id: 7F0CEB10
+    state: present
+
+- name: Add missing public key for mongo
+  become: yes
+  apt_key:
+    keyserver: hkp://keyserver.ubuntu.com
+    id: 4B7C549A058F8B6B
+    state: present
+
+- name: Add mongo sources list
+  become: yes
+  lineinfile: 
+    line: "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse"
+    path: /etc/apt/sources.list.d/mongodb.list
+    create: yes
+
+- name: Install mongo
+  become: yes
+  apt: 
+    name: mongodb-org
+    state: latest
+    update_cache: yes
+
+- name: Install pip3
+  become: yes
+  apt:
+    name: python3-pip
+    state: present
+
+- name: Install pymongo
+  become: yes
+  pip:
+    name: pymongo
+    state: present
+
+- name: Start the mongodb service
+  become: yes
+  shell: systemctl start mongod
+
+- name: Enable the mongodb service
+  become: yes
+  shell: systemctl enable mongod
+
+- name: Create mongo user
+  mongodb_user:
+    database: admin
+    name: mongo_user
+    password: password
+    state: present
+
+- name: Add the environment variables
+  become: yes
+  blockinfile:
+    path: /etc/environment
+    block: |
+      APP_PORT="3002"
+      MONGO_PORT="27012"
+      MONGO_USER="mongo_user"
+      MONGO_PASSWORD="password"
+      MONGO_IP="localhost"
+
+    
+
+  
