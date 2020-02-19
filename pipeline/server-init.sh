@@ -10,9 +10,7 @@ set -x
 sudo add-apt-repository ppa:ansible/ansible -y
 sudo apt-get update
 sudo apt-get install ansible -y
-#ansible-galaxy install geerlingguy.java
-#ansible-playbook /bakerx/main.yml -i /bakerx/inventory
+ansible-playbook /bakerx/pipeline/playbook.yml -i /bakerx/pipeline/inventory
 
 # Ensure security key has proper permissions
 chmod 700 ~/.ssh/jenkins_rsa
-
