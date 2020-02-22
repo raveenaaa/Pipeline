@@ -3,7 +3,7 @@ pipeline {
       stages {
             stage('Source'){
                   steps{
-                        git 'clone https://github.com/chrisparnin/checkbox.io'
+                        git 'https://github.com/chrisparnin/checkbox.io'
                   }
             }
             stage('Build'){
