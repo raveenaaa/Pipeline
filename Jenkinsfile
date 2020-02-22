@@ -9,6 +9,7 @@ pipeline {
             stage('Build'){
                   steps{
                         echo 'Installing node modules'
+                        sh 'ls -la'
                         // sh 'cd checkbox.io'
                         sh 'npm install'
                         
