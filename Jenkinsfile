@@ -9,7 +9,7 @@ pipeline {
             stage('Build'){
                   steps{
                         echo 'Installing node modules'
-                        sh 'cd checkbox.io'
+                        // sh 'cd checkbox.io'
                         sh 'npm install'
                         
                         echo 'Starting mongodb'
