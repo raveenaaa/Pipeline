@@ -43,6 +43,7 @@
   apt:
     name: 
     - python3-pip
+    - python-pip
     - python-setuptools
     state: present
     update_cache: yes
@@ -70,19 +71,21 @@
   mongodb_user:
     database: admin
     name: mongo_user
-    password: password
+    password: "{{ lookup('file', '/bakerx/pipeline/jenkins_password.txt') }}"
     state: present
     roles: readWrite
 
 - name: Add the environment variables
+  vars:
+    password: "{{ lookup('file', '/bakerx/pipeline/jenkins_password.txt') }}"
   become: yes
   blockinfile:
     path: /etc/environment
     block: |
       APP_PORT="3002"
-      MONGO_PORT="27012"
+      MONGO_PORT="27017"
       MONGO_USER="mongo_user"
-      MONGO_PASSWORD="password"
+      MONGO_PASSWORD="{{ password }}"
       MONGO_IP="localhost"
 
     
