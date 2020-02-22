@@ -9,8 +9,8 @@ pipeline {
             stage('Build'){
                   steps{
                         echo 'Installing node modules'
-                        sh 'cd checkbox.io'
-                        sh 'npm install'
+                        sh 'sudo cd checkbox.io'
+                        sh 'sudo npm install'
                         
                         echo 'Starting mongodb'
                         // sh 'sudo systemctl daemon-reload'
@@ -18,12 +18,12 @@ pipeline {
                         sh 'sudo service mongod start '
                         
                         echo 'Starting node server'
-                        sh 'node server-side/site/server.js'
+                        sh 'sudo node server-side/site/server.js'
                   }
             }
             stage('Test'){
                   steps{
-                        sh 'npm test'
+                        sh 'sudo npm test'
                   }
             }
       }
