@@ -2,7 +2,9 @@ pipeline {
       agent any
       stages {
             stage('Source'){
-                  git 'clone https://github.com/chrisparnin/checkbox.io'
+                  steps{
+                        git 'clone https://github.com/chrisparnin/checkbox.io'
+                  }
             }
             stage('Build'){
                   steps{
