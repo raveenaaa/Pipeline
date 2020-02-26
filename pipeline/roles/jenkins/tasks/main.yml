@@ -50,6 +50,30 @@
     line=HTTP_PORT=9000
   become: true
 
+# - name: Change Jenkins JAVA options
+#   lineinfile: 
+#     dest=/etc/default/jenkins
+#     regexp=^JENKINS_ARGS=
+#     line=JENKINS_ARGS="{{jenkins.JAVA_OPTIONS}}"
+#   become: true
+
+- name: Creating Directory For Groovy Script - Jenkins
+  become: true
+  file:
+    path: "/var/lib/jenkins/init.groovy.d"
+    state: directory
+    mode: 0755
+    owner: jenkins
+
+- name: Creating Jenkins User and skipping initial setup
+  become: true
+  template:
+    force: yes
+    src: "templates/basic_security.groovy"
+    dest: "/var/lib/jenkins/init.groovy.d/basic-security.groovy"
+    mode: 0755
+    owner: jenkins
+
 - name: Restarting Jenkins
   become: yes
   service:
@@ -66,3 +90,63 @@
   retries: 6
   delay: 15
   when: jenkins_install.changed
+
+- name: Install build pipeline plugin
+  jenkins_plugin:
+    name: build-pipeline-plugin
+    url_username: admin
+    url_password: admin
+    url: http://192.168.33.20:9000
+  retries: 6
+  delay: 3
+  register: pipeline_installed
+  until: pipeline_installed is not failed
+
+- name: Install Git plugin
+  jenkins_plugin:
+    name: git
+    url_username: admin
+    url_password: admin
+    url: http://192.168.33.20:9000
+  retries: 6
+  delay: 3
+  register: git_installed
+  until: git_installed is not failed
+
+
+- name: Install workspace cleanup plugin
+  jenkins_plugin:
+    name: ws-cleanup
+    url_username: admin
+    url_password: admin
+    url: http://192.168.33.20:9000
+  retries: 6
+  delay: 3
+  register: ws_installed
+  until: ws_installed is not failed
+
+- name: Install workflow aggregator plugin
+  jenkins_plugin:
+    name: workflow-aggregator
+    url_username: admin
+    url_password: admin
+    url: http://192.168.33.20:9000
+  retries: 6
+  delay: 3
+  register: wa_installed
+  until: wa_installed is not failed
+
+- name: Restarting Jenkins
+  become: yes
+  service:
+    name: jenkins
+    state: restarted
+
+- name: "Wait For Jenkins To Come Up"
+  uri:
+    url: http://192.168.33.20:9000
+    status_code: 403
+  register: result
+  until: result.status == 403
+  retries: 6
+  delay: 15
