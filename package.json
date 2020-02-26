@@ -10,6 +10,7 @@
   "dependencies": {
     "chalk": "^3.0.0",
     "pipeline": "^0.1.3",
-    "yargs": "^15.1.0"
+    "yargs": "^15.1.0",
+    "jenkins": "^0.27.0"
   }
 }
