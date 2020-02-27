@@ -73,5 +73,5 @@ Completed the following tasks:
 
 For the next milestone:
 
-- Setup a jenkins build job using the Jenkinsfile.
+- Setup a jenkins build job.
 
