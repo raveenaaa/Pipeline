@@ -39,4 +39,39 @@ Completed the following tasks:
 For the next milestone:
 
 - Setup a jenkins build job using the Jenkinsfile.
-- Create the `build` command that will trigger the build job.
+- Create the `build` command that will trigger the build job.  
+
+
+## Checkpoint 2
+
+![](/images/checkpoint2.PNG)
+
+For checkpoint 2, the tasks within the 3 major tasks were assigned and completed as follows:
+
+#### Automatically configure a jenkins server - Rohit
+
+Completed the following tasks:
+
+- Add Groovy script for Jenkins user creation and to skip Jenkins setup wizard.  
+- Install required Jenkins plugins.  
+
+For the next milestone:
+
+- Manage Jenkins secrets.  
+
+#### Automatically configure a build environment for a node web application (checkbox.io) - Raveena
+
+Completed the following tasks:
+
+- Secure passwords using Ansible Vault.  
+
+#### Create a build job - Zachariah
+
+Completed the following tasks:
+
+- Create the `build` command that will trigger the build job.  
+
+For the next milestone:
+
+- Setup a jenkins build job using the Jenkinsfile.
+
