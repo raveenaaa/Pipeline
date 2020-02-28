@@ -7,6 +7,12 @@ const jenkins = require("jenkins")({
 exports.command = "build <job>";
 exports.desc = "Trigger the build job";
 
+exports.handler = async argv => {
+  (async () => {
+    await run();
+  })();
+};
+
 async function getBuildStatus(job, id) {
   return new Promise(async function(resolve, reject) {
     console.log(`Fetching ${job}: ${id}`);
@@ -40,7 +46,7 @@ async function triggerBuild(job) {
   return buildId;
 }
 
-async function main() {
+async function run() {
   var job = process.argv[3];
   console.log(`Triggering build: ${job}`);
   let buildId = await triggerBuild(job).catch(e => console.log(e));
@@ -56,7 +62,3 @@ async function main() {
   });
   console.log(output);
 }
-
-(async () => {
-  await main();
-})();
