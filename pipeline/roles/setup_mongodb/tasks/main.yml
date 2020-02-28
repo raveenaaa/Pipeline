@@ -1,5 +1,5 @@
 ---
-# Role that sets up and configures mongodb 
+# Role that sets up and configures mongodb
 # We choose to install from site repository (mongodb-org) instead of Ubuntu repository
 # That way we get the latest version of mongodb
 # https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
@@ -26,14 +26,14 @@
 
 - name: Add mongo sources list
   become: yes
-  lineinfile: 
+  lineinfile:
     line: "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse"
     path: /etc/apt/sources.list.d/mongodb.list
     create: yes
 
 - name: Install mongo
   become: yes
-  apt: 
+  apt:
     name: mongodb-org
     state: latest
     update_cache: yes
@@ -41,10 +41,10 @@
 - name: Install pip, setuptools
   become: yes
   apt:
-    name: 
-    - python3-pip
-    - python-pip
-    - python-setuptools
+    name:
+      - python3-pip
+      - python-pip
+      - python-setuptools
     state: present
     update_cache: yes
 
@@ -87,7 +87,3 @@
       MONGO_USER="mongo_user"
       MONGO_PASSWORD="{{ password }}"
       MONGO_IP="localhost"
-
-    
-
-  

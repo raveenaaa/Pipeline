@@ -2,6 +2,7 @@
 
 - hosts: jenkins
   roles:
-  - jenkins
-  - setup_nodejs
-  - setup_mongodb
+    - jenkins
+    - setup_nodejs
+    - setup_mongodb
+    - setup_build_job

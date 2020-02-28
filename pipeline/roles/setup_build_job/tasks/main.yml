@@ -1,0 +1,55 @@
+---
+- name: Install "pm2" node.js package.
+  become: yes
+  npm:
+    name: pm2
+    global: yes
+
+- name: Add user "jenkins" to sudo
+  become: yes
+  lineinfile:
+    path: /etc/sudoers.d/jenkins
+    line: "jenkins ALL=(ALL) NOPASSWD: ALL"
+    state: present
+    mode: 0440
+    create: yes
+    validate: "visudo -cf %s"
+
+- name: Install Jenkins job builder
+  become: yes
+  pip:
+    name: jenkins-job-builder
+
+- name: Creating directory for ini file
+  become: yes
+  file:
+    path: "/etc/jenkins_jobs/"
+    state: directory
+    mode: 0755
+    owner: jenkins
+
+- name: Configure jenkins-job-builder
+  become: yes
+  copy:
+    dest: "/etc/jenkins_jobs/jenkins_jobs.ini"
+    content: |
+      [job_builder]
+      ignore_cache=True
+      keep_descriptions=False
+      recursive=False
+      allow_duplicates=False
+      update=all
+
+      [jenkins]
+      user=admin
+      password=admin
+      url=http://192.168.33.20:9000
+      query_plugins_info=False
+
+- name: Copy the YAML to setup build job
+  copy:
+    src: /bakerx/pipeline/checkbox-io-pipeline.yml
+    dest: /tmp/checkbox-io-pipeline.yml
+
+- name: Create the build job in jenkins
+  command: jenkins-jobs update /tmp/checkbox-io-pipeline.yml

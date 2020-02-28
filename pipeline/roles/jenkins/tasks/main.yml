@@ -1,8 +1,7 @@
 ---
-
 - name: Add java repo
   become: yes
-  apt_repository: repo='ppa:openjdk-r/ppa' 
+  apt_repository: repo='ppa:openjdk-r/ppa'
 
 - name: apt update
   become: yes
@@ -23,7 +22,7 @@
     state: present
     validate_certs: no
 
-- name: Check For Jenkins List    
+- name: Check For Jenkins List
   stat: path=/etc/apt/sources.list.d/jenkins.list
   register: jenkins_list
 
@@ -38,20 +37,19 @@
 - name: Installing Jenkins
   become: yes
   apt:
-    name: jenkins     
+    name: jenkins
     state: present
     update_cache: yes
   register: jenkins_install
 
 - name: Change port to 9000
-  lineinfile: 
-    dest=/etc/default/jenkins
+  lineinfile: dest=/etc/default/jenkins
     regexp=^HTTP_PORT=
     line=HTTP_PORT=9000
   become: true
 
 # - name: Change Jenkins JAVA options
-#   lineinfile: 
+#   lineinfile:
 #     dest=/etc/default/jenkins
 #     regexp=^JENKINS_ARGS=
 #     line=JENKINS_ARGS="{{jenkins.JAVA_OPTIONS}}"
@@ -112,7 +110,6 @@
   delay: 3
   register: git_installed
   until: git_installed is not failed
-
 
 - name: Install workspace cleanup plugin
   jenkins_plugin:
