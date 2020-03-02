@@ -8,8 +8,9 @@ exports.command = "build <job>";
 exports.desc = "Trigger the build job";
 
 exports.handler = async argv => {
+  const { job } = argv;
   (async () => {
-    await run();
+    await run(job);
   })();
 };
 
@@ -46,8 +47,7 @@ async function triggerBuild(job) {
   return buildId;
 }
 
-async function run() {
-  var job = process.argv[3];
+async function run(job) {
   console.log(`Triggering build: ${job}`);
   let buildId = await triggerBuild(job).catch(e => console.log(e));
 
