@@ -56,9 +56,17 @@ async function run(job) {
   console.log(`Build result: ${build.result}`);
 
   console.log(`Build output`);
-  let output = await jenkins.build.log({
-    name: job,
-    number: buildId
+  var log = jenkins.build.logStream(job, buildId);
+
+  log.on("data", function(text) {
+    console.log(text);
   });
-  console.log(output);
+
+  log.on("error", function(err) {
+    console.log("error", err);
+  });
+
+  log.on("end", function() {
+    console.log("End of build log.");
+  });
 }
