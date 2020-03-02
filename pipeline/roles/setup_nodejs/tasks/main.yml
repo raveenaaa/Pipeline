@@ -3,7 +3,7 @@
 
 - name: Get the script to enable NodeSource repository
   get_url:
-    url: "https://deb.nodesource.com/setup_10.x"
+    url: "https://deb.nodesource.com/setup_12.x"
     dest: "/tmp/nodejs.sh"
 
 - name: Set execution permission for nodejs.sh script

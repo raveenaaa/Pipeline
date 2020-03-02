@@ -5,4 +5,5 @@
     - jenkins
     - setup_nodejs
     - setup_mongodb
+    - setup_nginx
     - setup_build_job

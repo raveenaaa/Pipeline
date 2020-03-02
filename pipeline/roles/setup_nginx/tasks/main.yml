@@ -1,0 +1,13 @@
+---
+# Role that installs nginx and starts the service
+
+- name: Install latest nginx
+  become: true
+  apt:
+    name: nginx
+    state: latest
+
+- name: Start nginx service
+  service:
+    name: nginx
+    state: started
