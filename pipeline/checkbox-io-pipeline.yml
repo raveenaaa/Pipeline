@@ -13,7 +13,7 @@
           npm install'''
                         
           echo 'Starting mongodb'
-          sh 'sudo service mongod start '
+          sh 'sudo service mongod start'
                         
           echo 'Starting node server'
           sh '''
@@ -24,5 +24,11 @@
           sh '''
           cd server-side/site
           npm test'''
+        }
+        stage('Tear-down'){
+          sh '''
+          cd server-side/site
+          pm2 stop server.js'''
+          sh 'sudo service mongod stop'
         }
       }
