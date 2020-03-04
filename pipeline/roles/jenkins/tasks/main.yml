@@ -63,6 +63,14 @@
     mode: 0755
     owner: jenkins
 
+- name: Add the environment variables
+  become: yes
+  blockinfile:
+    path: /etc/environment
+    marker: "## JENKINS ENV VARIABLES"
+    block: |
+      ADMIN_PASSWORD={{ admin_pwd }}
+      
 - name: Creating Jenkins User and skipping initial setup
   become: true
   template:
@@ -93,7 +101,7 @@
   jenkins_plugin:
     name: build-pipeline-plugin
     url_username: admin
-    url_password: admin
+    url_password: "{{ admin_pwd }}"
     url: http://192.168.33.20:9000
   retries: 6
   delay: 3
@@ -104,7 +112,7 @@
   jenkins_plugin:
     name: git
     url_username: admin
-    url_password: admin
+    url_password: "{{ admin_pwd }}"
     url: http://192.168.33.20:9000
   retries: 6
   delay: 3
@@ -115,7 +123,7 @@
   jenkins_plugin:
     name: ws-cleanup
     url_username: admin
-    url_password: admin
+    url_password: "{{ admin_pwd }}"
     url: http://192.168.33.20:9000
   retries: 6
   delay: 3
@@ -126,7 +134,7 @@
   jenkins_plugin:
     name: workflow-aggregator
     url_username: admin
-    url_password: admin
+    url_password: "{{ admin_pwd }}"
     url: http://192.168.33.20:9000
   retries: 6
   delay: 3

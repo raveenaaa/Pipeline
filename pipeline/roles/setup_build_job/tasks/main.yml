@@ -42,7 +42,7 @@
 
       [jenkins]
       user=admin
-      password=admin
+      password={{ admin_pwd }}
       url=http://192.168.33.20:9000
       query_plugins_info=False
 
