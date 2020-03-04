@@ -1,6 +1,8 @@
 # Main playbook that runs the 'Configure jenkins server task'
 
 - hosts: jenkins
+  vars_files:
+   - /bakerx/pipeline/vars/vars.yml
   roles:
     - jenkins
     - setup_nodejs
