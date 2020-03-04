@@ -67,6 +67,7 @@
   become: yes
   blockinfile:
     path: /etc/environment
+    marker: "## JENKINS ENV VARIABLES"
     block: |
       ADMIN_PASSWORD={{ admin_pwd }}
       
