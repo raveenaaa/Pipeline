@@ -28,6 +28,23 @@ Check the displayed build log to see if the build `PASSED` or `FAILED`.
 
 #### Task 2 - Automatically configure a build environment
 
+In this task we configured) the build environment for [checkbox.io](https://github.com/chrisparnin/checkbox.io), a nodejs web application. Checkbox.io has dependencies on nginx, node, and mongodb. All of these were installed using separate ansible roles:
+
+* __[MongoDB-4.2.3](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/)__ : For this we had two options. Installation from Ubuntu Repository or from Mongo's own site repository. We chose the latter since that guarantees us the latest version of MongoDB.
+* __Node__: We downloaded the version 12.16.1 which is the latest version
+* __Nginx__: We downloaded the version 1.14.0
+
+After installing the dependencies we create a mongo user with a password ad `readWrite` role. The password is secured in the `vars/vars.yml` file using `ansible-vault`
+
+Further we defined the following environment variables:
+
+* `APP_PORT=3002`
+* `MONGO_PORT=27017`
+* `MONGO_USER=<user>`
+* `MONGO_PASSWORD=<pass>`
+* `MONGO_IP=localhost`
+These were configured using the `blockinfile` module of ansible and the variables were permanently added to `/etc/environment` file
+
 #### Task 3 - Create a build job
 
 - The Ansible module to create a build job, using a Jenkinsfile, uses Jenkins V1 and hence, is discouraged. Instead `jenkins-job-builder` is the prefered way of implementing a build job. This utilizes a DSL that allows to build a pipeline as code.
