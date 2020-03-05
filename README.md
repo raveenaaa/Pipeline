@@ -31,6 +31,15 @@ Check the displayed build log to see if the build `PASSED` or `FAILED`.
 
 #### Task 1 - Automatically configure a jenkins server
 
+- In this task, a Jenkins server was configured completely using Ansible and the plugins required for building the pipeline were installed.  
+- A groovy script was created to turn off the initial jenkins setup wizard and automatically create a user for authentication. An attempt to do this task by just setting the line `JAVA_ARGS="-Djenkins.install.runSetupWizard=false"` in the jenkins file did not succeed. A task to restart the Jenkins server was included for allowing the changes to be applied.  
+- For the installation of plugins, a retry property was added in the ansible task to avoid possible failure due to trivial issues.
+- The following plugins were installed to facilitate the build process:  
+  * Build Pipeline (build-pipeline-plugin)
+  * Git (git)
+  * Workspace Cleanup (ws-cleanup)
+  * Pipeline (workflow-aggregator)
+  
 #### Task 2 - Automatically configure a build environment
 
 In this task we configured the build environment for [checkbox.io](https://github.com/chrisparnin/checkbox.io), a nodejs web application. Checkbox.io has dependencies on nginx, node, and mongodb. All of these were installed using separate ansible roles:
