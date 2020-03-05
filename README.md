@@ -33,7 +33,7 @@ Check the displayed build log to see if the build `PASSED` or `FAILED`.
 
 #### Task 2 - Automatically configure a build environment
 
-In this task we configured) the build environment for [checkbox.io](https://github.com/chrisparnin/checkbox.io), a nodejs web application. Checkbox.io has dependencies on nginx, node, and mongodb. All of these were installed using separate ansible roles:
+In this task we configured the build environment for [checkbox.io](https://github.com/chrisparnin/checkbox.io), a nodejs web application. Checkbox.io has dependencies on nginx, node, and mongodb. All of these were installed using separate ansible roles:
 
 * __[MongoDB-4.2.3](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/)__ : For this we had two options. Installation from Ubuntu Repository or from Mongo's own site repository. We chose the latter since that guarantees us the latest version of MongoDB.
 * __Node__: We downloaded the version 12.16.1 which is the latest version
