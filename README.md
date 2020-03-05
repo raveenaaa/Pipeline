@@ -16,7 +16,12 @@ Clone the repository. To setup the pipleline, run:
 pipeline setup
 ```
 
-Wait for the setup to complete. To build the checkbox.io project, run:
+Wait for the setup to complete. 
+
+To run the build job we need to supply the admin password which is used in `build.js` to generate the jenkins url. 
+* You can do this by setting an environment variable `ADMIN_PWD` in your local environment. If not the code will stick to the default value we have set.
+
+To build the checkbox.io project, run:
 
 ```
 pipeline build checkbox.io
