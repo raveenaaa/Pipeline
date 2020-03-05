@@ -39,7 +39,7 @@ In this task we configured the build environment for [checkbox.io](https://githu
 * __Node__: We downloaded the version 12.16.1 which is the latest version
 * __Nginx__: We downloaded the version 1.14.0
 
-After installing the dependencies we create a mongo user with a password ad `readWrite` role. The password is secured in the `vars/vars.yml` file using `ansible-vault`
+After installing the dependencies we create a mongo user with a password and `readWrite` role. The password is secured in the `vars/vars.yml` file using `ansible-vault`
 
 Further we defined the following environment variables:
 
@@ -48,6 +48,7 @@ Further we defined the following environment variables:
 * `MONGO_USER=<user>`
 * `MONGO_PASSWORD=<pass>`
 * `MONGO_IP=localhost`
+
 These were configured using the `blockinfile` module of ansible and the variables were permanently added to `/etc/environment` file
 
 #### Task 3 - Create a build job
