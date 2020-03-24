@@ -1,0 +1,45 @@
+---
+- name: install maven
+  become: yes
+  apt:
+    name: maven
+    state: present
+
+# Install and start MySQL
+
+- name: Specify MySQL root password before installing MySQL
+  become: yes
+  debconf:
+    name: mysql-server
+    question: mysql-server/root_password
+    value: password
+    vtype: password
+
+- name: MySQL root password confirmation
+  become: yes
+  debconf:
+    name: mysql-server
+    question: mysql-server/root_password_again
+    value: password
+    vtype: password
+
+- name: Install MySQL server
+  become: yes
+  apt:
+    name: mysql-server
+    state: present
+
+# - name: Install pymysql using pip
+#   become: true
+#   pip:
+#     name: pymysql
+#     state: present
+
+# - name: Install Python MySQLDB
+#   become: true
+#   apt: pkg="python-mysqldb" state=present
+
+- name: start MySQL
+  service:
+    name: mysql
+    state: started

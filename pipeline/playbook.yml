@@ -4,10 +4,11 @@
 
 - hosts: jenkins
   vars_files:
-   - /bakerx/pipeline/vars/vars.yml
+    - /bakerx/pipeline/vars/vars.yml
   roles:
     - setup_nodejs
     - setup_mongodb
+    - setup_iTrust_build_job
     - setup_nginx
     - jenkins
     - setup_build_job
