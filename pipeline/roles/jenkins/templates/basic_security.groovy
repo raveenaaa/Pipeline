@@ -17,10 +17,6 @@ def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
 strategy.setAllowAnonymousRead(false)
 instance.setAuthorizationStrategy(strategy)
 
-// if (!instance.installState.isSetupComplete()) {
-//   println '--> Neutering SetupWizard'
-//   InstallState.INITIAL_SETUP_COMPLETED.initializeState()
-// }
 instance.setInstallState(InstallState.INITIAL_SETUP_COMPLETED)
 
 

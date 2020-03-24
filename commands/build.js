@@ -1,5 +1,12 @@
+// The default value for Admin password
+// Used when env variable ADMIN_PWD is not set
+
+var password = 'admin'
+if (process.env.ADMIN_PWD) {
+    password = process.env.ADMIN_PWD
+}
 const jenkins = require("jenkins")({
-  baseUrl: "http://admin:admin@192.168.33.20:9000",
+  baseUrl: `http://admin:${password}@192.168.33.20:9000`,
   crumbIssuer: true,
   promisify: true
 });

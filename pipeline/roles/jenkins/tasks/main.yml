@@ -48,13 +48,6 @@
     line=HTTP_PORT=9000
   become: true
 
-# - name: Change Jenkins JAVA options
-#   lineinfile:
-#     dest=/etc/default/jenkins
-#     regexp=^JENKINS_ARGS=
-#     line=JENKINS_ARGS="{{jenkins.JAVA_OPTIONS}}"
-#   become: true
-
 - name: Creating Directory For Groovy Script - Jenkins
   become: true
   file:
