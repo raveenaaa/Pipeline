@@ -1,0 +1,37 @@
+- scm:
+    name: ncsu-github
+    scm:
+      - git:
+          url: https://github.ncsu.edu/engr-csc326-staff/iTrust2-v6.git
+          credentials-id: GIT_CREDENTIALS
+
+- job:
+    name: iTrust
+    project-type: pipeline
+    scm:
+      - ncsu-github
+    dsl: |
+      node {
+        stage('Source'){
+          git 'https://github.ncsu.edu/engr-csc326-staff/iTrust2-v6.git'
+        }
+        stage('Build'){
+          echo 'Changing db and email configurations'
+          sh '''
+          cd iTrust2-v6/iTrust2/src/main/java/
+          cp db.properties.template db.properties
+          sed 's/password  /password password/g' db.properties > new && mv new db.properties
+          cp email.properties.template email.properties
+          sed 's/from /from csc519s20.11@gmail.com/g;s/username /username csc519s20.11/g;s/password /password devops11/g' email.properties > new && mv new email.properties'''
+                        
+          echo 'Building database and creating sample data'
+          sh '''
+          cd iTrust2-v6/iTrust2/
+          mvn -f pom-data.xml process-test-classes'''
+        }
+        stage('Test'){
+          sh '''
+          cd iTrust2-v6/iTrust2/
+          mvn clean test verify org.apache.maven.plugins:maven-checkstyle-plugin:3.1.0:checkstyle'''
+        }
+      }
