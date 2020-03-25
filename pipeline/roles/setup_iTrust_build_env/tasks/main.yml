@@ -29,16 +29,6 @@
     name: mysql-server
     state: present
 
-# - name: Install pymysql using pip
-#   become: true
-#   pip:
-#     name: pymysql
-#     state: present
-
-# - name: Install Python MySQLDB
-#   become: true
-#   apt: pkg="python-mysqldb" state=present
-
 - name: start MySQL
   service:
     name: mysql
@@ -54,3 +44,8 @@
   become: yes
   apt:
     deb: /tmp/google-chrome-stable_current_amd64.deb
+
+- name: Set timezone to America/New_York
+  become: yes
+  timezone:
+    name: America/New_York

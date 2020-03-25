@@ -8,7 +8,8 @@
   roles:
     - setup_nodejs
     - setup_mongodb
-    - setup_iTrust_build_job
+    - setup_iTrust_build_env
     - setup_nginx
     - jenkins
     - setup_build_job
+    # - setup_iTrust_build_job
