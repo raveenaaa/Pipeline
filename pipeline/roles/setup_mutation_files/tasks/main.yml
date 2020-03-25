@@ -1,0 +1,12 @@
+---
+# Copy the files from ansible onto jenkins
+
+- name: Copy the Fuzzer class file to jenkins-srv
+  copy:
+    src: /bakerx/pipeline/fuzzer.js
+    dest: fuzzer.js
+
+- name: Copy driver js code for test prioritization analysis
+  copy:
+    src: /bakerx/pipeline/mutation_driver.js
+    dest: mutation_driver.js
