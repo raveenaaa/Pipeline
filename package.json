@@ -13,7 +13,9 @@
     "yargs": "^15.1.0",
     "jenkins": "^0.27.0",
     "bluebird": "^3.5.0",
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.17",
+    "chai": "^4.1.2",
+    "mocha": "^6.0.0"
   },
   "devDependencies": {
     "cross-env": "^5.0.5",
@@ -24,6 +26,8 @@
     "random-js": "^2.1.0",
     "stack-trace": "0.0.9",
     "stacktrace-parser": "^0.1.1",
-    "underscore": "^1.9.2"
+    "underscore": "^1.9.2",
+    "escodegen": "^1.4.1",
+    "esprima": "^4.0.0"
   }
 }
