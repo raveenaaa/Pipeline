@@ -1,6 +1,7 @@
 # Milestone 2 Checkpoint Report
 
 ## Project Board
+![](images/M2-Checkpoint.PNG)
 
 For this checkpoint, the 3 general tasks were assigned as follows:
 

@@ -2,7 +2,8 @@
 
 ## Checkpoint Report
 
-A link to the checkpoint report can be found [here](/CHECKPOINT.md).
+A link to Milestone 1 checkpoint report can be found [here](/CHECKPOINT.md).  
+A link to Milestone 2 checkpoint report can be found [here](/CHECKPOINT-M2.md).  
 
 ## Milestone Report
 
