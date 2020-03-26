@@ -12,9 +12,15 @@ Remaining tasks:
 
 #### Implement a test suite analysis for detecting useful tests - Raveena
 
-Completed the following tasks:  
+* Completed the following tasks:  
+* Swap "==" with "!="
+* swap 0 with 1
+* change content of "strings" in code.
+* Swap "<" with ">"
 
 Remaining tasks:  
+* Generate 100 test runs of of mutate, build, reset
+* Create script to invoke driver code when `pipeline useful-tests -c` command is called.
 
 #### Implement a static analysis for checkbox.io - Rohit
 
