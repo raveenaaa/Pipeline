@@ -38,4 +38,12 @@ Remaining tasks:
 
 Completed the following tasks:
 
+- Implement static analysis to detect:
+  - Long Methods
+  - Message Chains
+  - Nesting Depth
+
 Remaining tasks:
+
+- Configure a static analysis stage in Jenkins build job
+- Encrypt username, password, etc.
