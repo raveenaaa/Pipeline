@@ -1,5 +1,5 @@
 ---
-# Copy the files from ansible onto jenkins
+Copy the files from ansible onto jenkins
 
 - name: Copy the Fuzzer class file to jenkins-srv
   copy:
@@ -10,3 +10,11 @@
   copy:
     src: /bakerx/pipeline/mutation_driver.js
     dest: mutation_driver.js
+
+- name: Copy package.json 
+  copy:
+    src: /bakerx/package.json
+    dest: package.json
+
+- name: Install required node packages
+  shell: npm install
