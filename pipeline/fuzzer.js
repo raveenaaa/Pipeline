@@ -29,9 +29,9 @@ class fuzzer {
 
             // Replace < with > taking care of generics
             // To avoid generics:
-            // Match '>' with negative lookbehind for [a-z] >* i.e. avoid Class>>
-            // Match '<' with negative lookahead for [a-z] i.e. avoid <Class
-            regex = /(?<![a-z]+>*)(>)|(<)(?![a-z]+)/i;
+            // Match '>' with negative lookbehind to avoid: Class>>, ->
+            // Match '<' with negative lookahead to: avoid <Class
+            regex = /(?<![a-z>\-])(>)|(<)(?![a-z]+)/i;
             var result = regex.exec(mutatedFile)
 
             if (result != null){
