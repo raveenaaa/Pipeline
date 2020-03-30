@@ -18,3 +18,11 @@
 
 - name: Install required node packages
   shell: npm install
+
+- name: Setup MySQL Configurations
+  copy:
+    dest: "mysql_config.txt"
+    content: |
+      [client]
+      user=root
+      password=password

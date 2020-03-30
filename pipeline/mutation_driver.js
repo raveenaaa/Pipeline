@@ -6,13 +6,9 @@ var Bluebird = require('bluebird')
 const path = require('path');
 const fuzzer = require('./fuzzer')
 const chalk = require('chalk');
-const os   = require('os');
 
-
-let identifyFile = path.join(os.homedir(), '.bakerx', 'insecure_private_key');
-let sshExe = `ssh -i "${identifyFile}" -p 2002 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  vagrant@127.0.0.1`;
-let cmd = 'sh /bakerx/fuzzer.sh'
-
+const codeDir = 'iTrust2-v6/iTrust2/src/main/java/edu/ncsu/csc/itrust2';
+const testDir = 'iTrust2-v6/iTrust2/target/surefire-reports';
 /*
 *   Get all the source code files of the iTrust code base
 *   Do mutations on them for 100 iterations
@@ -20,32 +16,49 @@ let cmd = 'sh /bakerx/fuzzer.sh'
 */
 if( process.env.NODE_ENV != "test")
 {   
-    var files = [];
-    getFiles('iTrust2-v6/iTrust2/src/main/java/edu/ncsu/csc/itrust2', files);
-    testResults = mutationTesting(files, 2)
-    // prioritize(testResults);
+    iterations = Number.parseInt(process.argv[2], 10);
+    run(iterations);
 }
 
+async function run(iterations=100) {
+
+    var files = [];
+    getFiles(codeDir, files);
+    testResults = await mutationTesting(files, iterations);
+    orderedTestNames = await prioritize(testResults);
+    await saveReports(orderedTestNames, testResults);
+}
+
+function saveReports(names, testResults) {
+    var data = ""
+    for (name of names) {
+        passed = testResults[name].passed;
+        failed = testResults[name].failed;
+
+        data += `${name} => Passed: ${passed} Failed: ${failed}\n`
+    }
+    console.log('********** Test Report **********');
+    console.log(chalk.green(data))
+    fs.writeFileSync('report.txt', data, 'utf-8');
+}
 
 /*
 *   Recursively get all the files in a directory
 *   If a regex is given return files that only match that regex
 */
 function getFiles(directory, files, regex=null){
-    var dirPath = path.join(__dirname + directory)
-    var dir = fs.readdirSync(dirPath, 'utf8')
+    var dir = fs.readdirSync(directory, 'utf8')
     dir.forEach(file => {
-        var pathOfCurrentItem = path.join(__dirname + directory + '/' + file);
+        var pathOfCurrentItem = path.join(directory + '/' + file);
         if (fs.statSync(pathOfCurrentItem).isFile() && (regex == null || regex.exec(file) != null)) {
             files.push(pathOfCurrentItem);
         }
         else if (!fs.statSync(pathOfCurrentItem).isFile()){
-            var directorypath = path.join(directory + '\\' + file);
+            var directorypath = path.join(directory + '/' + file);
             getFiles(directorypath, files, regex);
         }
     });
 }
-
 
 /*
 *   Used to randomly pick upto 10% of the files to be mutated
@@ -67,24 +80,18 @@ function shuffle(array) {
     return array;
 }
 
-
 /*
 *   For a random numberOfFiles upto 10%
 *   Read it and mutate it using fuzzer class
-*   Save the original file contents for resetting after the test run
 */
-function mutateFiles(fileChoice, filePaths, numberOfFiles, originalFiles) {
+function mutateFiles(fileChoice, filePaths, numberOfFiles) {
     shuffle(fileChoice);
-    // console.log('Mutated files are:');
 
     for (file_num = 0; file_num < numberOfFiles; file_num++) {
         file = fs.readFileSync(filePaths[fileChoice[file_num]], 'utf-8');
-        originalFiles.push(file);
-        // console.log(filePaths[fileChoice[file_num]])
         fs.writeFileSync(filePaths[fileChoice[file_num]], fuzzer.mutateFile(file))
     }
 }
-
 
 /*
 * Mutate, run the tests, generate reports, reset
@@ -95,50 +102,74 @@ async function mutationTesting(filePaths,iterations)
 
     fileChoice = [...Array(filePaths.length).keys()]
     
-    for (var i = 0; i < iterations-1; i++) {
-
+    for (var i = 1; i <= iterations; i++) {
+        console.log(chalk(`=========== ITERATION ${i}/${iterations} ===========\n`));
+        var error = null
+        var errsignal = null
         numberOfFiles = fuzzer.random().integer(1, 10);
-        originalFiles = [];
-        mutateFiles(fileChoice, filePaths, numberOfFiles, originalFiles)
-        // console.log(chalk.bgGreen(originalFiles.length));
+        
 
         try
         {
-            child.execSync('cd iTrust2-v6/iTrust2 && mvn clean test verify');
+            console.log('....... Dropping existing database');
+            await child.execSync(`mysql --defaults-extra-file=mysql_config.txt -e 'DROP DATABASE IF EXISTS iTrust2'`, {stdio: 'inherit'});
+
+            console.log(chalk.cyan('....... Generating the Test Data'));
+            await child.execSync('cd iTrust2-v6/iTrust2 && mvn -f pom-data.xml process-test-classes', {stdio: 'pipe', timeout: 480000});
+
+            mutateFiles(fileChoice, filePaths, numberOfFiles)
+            
+            console.log(chalk.cyan('....... Running the tests'));
+            await child.execSync('cd iTrust2-v6/iTrust2 && mvn clean test verify', {maxBuffer: 1024 * 1024 * 1024, stdio: 'pipe'});
         }
         catch(e){
-            console.log(e)
-            error = String(e)
-
-            // If we don't have a compilation error
+            error = e.stdout
+            errsignal = e.signal
+        }
+        finally {
+            // If we don't have a compilation error/failure or build has passed
             // We can include the test results
-            if (!out.includes('COMPILATION ERROR')) {
+
+            var regex = /compilation (error|failure)/i;
+            var result = regex.exec(error);
+
+            if (result == null && fs.existsSync(testDir)) {
                 var testReports = [];
-                getFiles('/iTrust2/target/surefire-reports', testReports, /^TEST/);
-                testMap = updateResultMap(testMap, testReports);
-                for (tname in testMap) {
-                    console.log(chalk.bgGray(tname, testMap.tname))
-                } 
+                getFiles(testDir, testReports, /^TEST/);
+                testMap = await updateResultMap(testMap, testReports);
             }
             // Else we should not consider that iteration and try again
             else {
-                console.log(chalk.redBright('COMPILATION ERROR'));
+                if (result != null)
+                    console.log(chalk.redBright('....... COMPILATION ERROR'));
+
+                else if (errsignal == 'SIGTERM') {
+                    console.log(chalk.redBright('....... Timeout occurred while generating test data'));
+                }
+                else {
+                    console.log(chalk.redBright('........ Unexpected error'));
+                    console.log(e);
+                }
+                console.log(chalk.redBright(`....... Re-running iteration ${i}`));
                 i--;
             }
-        }
-        reset(numberOfFiles, filePaths, fileChoice, originalFiles);    
+            reset(); 
+        }   
     }
-
     return testMap;
 }
 
-
 /*
 *   Restore the original code base
+*   Drop the iTrust2 database
 */
-function reset(numberOfFiles, filePaths, fileChoice, originalFiles){
-    for (file_num = 0; file_num < numberOfFiles; file_num++) {
-        fs.writeFileSync(filePaths[fileChoice[file_num]], originalFiles[file_num])
+function reset(){
+    try{
+        console.log(chalk.redBright('....... Resetting iTrust2 repository\n'));
+        child.execSync('cd iTrust2-v6/ && git reset --hard HEAD', {stdio: "pipe"});
+    }
+    catch(e) {
+        console.log(chalk.redBright(e));
     }
 }
 
@@ -154,7 +185,6 @@ async function updateResultMap(testMap, testReports){
         var tests = readResults(xml2json);
         
         for (var test of tests) {
-            // console.log(chalk.bgGreen(test));
             if (!testMap.hasOwnProperty(test.name)){
                 testMap[test.name] = {name: test.name, passed: 0, failed: 0}
             }
@@ -191,50 +221,47 @@ function readResults(result)
     return tests;
 }
 
-
 /*
 *   Inserts in the array given a location
 */
-async function insert(element, array) {
-    array.splice(locationOf(element, array) + 1, 0, element);
+async function insert(element, array, testMap) {
+    array.splice(await locationOf(element, array, testMap), 0, element);
 }
-  
 
 /*
 *   Using quick sort to find the location of element in sorted array
 *   Inserted into the array based on the descending number of failed cases
 *   Tests that have failed more number of times will appear first in list
 */
-async function locationOf(element, array, start=0, end=array.length) {
+async function locationOf(element, array, testMap, start=0, end=array.length) {
 
     var pivot = Math.floor(start + (end - start) / 2);
 
     if (start == end) {
       return pivot
     }
-    else if (array[pivot].failed < element.failed) 
+    else if (testMap[array[pivot]].failed < testMap[element].failed) 
     {
-      return locationOf(element, array, start, pivot);
+      return locationOf(element, array, testMap, start, pivot);
     } 
-    else if (array[pivot].failed > element.failed) 
+    else if (testMap[array[pivot]].failed > testMap[element].failed)
     {
-      return locationOf(element, array, pivot, end);
+      return locationOf(element, array, testMap, pivot + 1, end);
+    } 
+    else {
+        return pivot + 1
     }
   }
-
 
 async function prioritize(testResults){
     var tests = [];
 
-    for (name in testResults){
+    for (test in testResults){
         if (tests.length == 0)
-            tests.push(testResults[name])
+            tests.push(testResults[test].name)
         else {
-            insert(testResults[name], tests)
+            await insert(testResults[test].name, tests, testResults)
         }
     }
-
-    tests.forEach( e => console.log(e));
-
     return tests;
 }
