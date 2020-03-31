@@ -105,17 +105,16 @@ async function mutationTesting(filePaths,iterations)
     for (var i = 1; i <= iterations; i++) {
         console.log(chalk(`=========== ITERATION ${i}/${iterations} ===========\n`));
         var error = null
-        var errsignal = null
         numberOfFiles = fuzzer.random().integer(1, 10);
         
 
         try
         {
             console.log('....... Dropping existing database');
-            await child.execSync(`mysql --defaults-extra-file=mysql_config.txt -e 'DROP DATABASE IF EXISTS iTrust2'`, {stdio: 'inherit'});
+            await child.execSync(`mysql --defaults-extra-file=mysql_config.txt -e 'DROP DATABASE IF EXISTS iTrust2'`, {stdio: 'pipe'});
 
             console.log(chalk.cyan('....... Generating the Test Data'));
-            await child.execSync('cd iTrust2-v6/iTrust2 && mvn -f pom-data.xml process-test-classes', {stdio: 'pipe', timeout: 480000});
+            await child.execSync('cd iTrust2-v6/iTrust2 && mvn -f pom-data.xml process-test-classes', {stdio: 'pipe', maxBuffer: 1024 * 1024 * 1024, timeout: 420000});
 
             mutateFiles(fileChoice, filePaths, numberOfFiles)
             
@@ -124,7 +123,6 @@ async function mutationTesting(filePaths,iterations)
         }
         catch(e){
             error = e.stdout
-            errsignal = e.signal
         }
         finally {
             // If we don't have a compilation error/failure or build has passed
@@ -140,15 +138,11 @@ async function mutationTesting(filePaths,iterations)
             }
             // Else we should not consider that iteration and try again
             else {
-                if (result != null)
+                if (result != null) {
                     console.log(chalk.redBright('....... COMPILATION ERROR'));
-
-                else if (errsignal == 'SIGTERM') {
-                    console.log(chalk.redBright('....... Timeout occurred while generating test data'));
                 }
                 else {
                     console.log(chalk.redBright('........ Unexpected error'));
-                    console.log(e);
                 }
                 console.log(chalk.redBright(`....... Re-running iteration ${i}`));
                 i--;
