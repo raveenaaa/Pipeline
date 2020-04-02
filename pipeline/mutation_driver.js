@@ -159,7 +159,7 @@ async function mutationTesting(filePaths,iterations)
 */
 function reset(){
     try{
-        console.log(chalk.redBright('....... Resetting iTrust2 repository\n'));
+        console.log('....... Resetting iTrust2 repository\n');
         child.execSync('cd iTrust2-v6/ && git reset --hard HEAD', {stdio: "pipe"});
     }
     catch(e) {
@@ -202,12 +202,13 @@ async function updateResultMap(testMap, testReports){
 function readResults(result)
 {
     var tests = [];
+    var classname = result.testsuite['$'].name;
     for( var i = 0; i < result.testsuite['$'].tests; i++ )
-    {
+    {   
         var testcase = result.testsuite.testcase[i];
-        
+        var testname = testcase['$'].name;
         tests.push({
-        name:   testcase['$'].name, 
+        name:   classname.concat(':', testname), 
         time:   testcase['$'].time, 
         status: testcase.hasOwnProperty('failure') ? "failed": "passed"
         });
