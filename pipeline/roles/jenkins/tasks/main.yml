@@ -45,7 +45,7 @@
 - name: Change port to 9000
   lineinfile: dest=/etc/default/jenkins
     regexp=^HTTP_PORT=
-    line=HTTP_PORT=9000
+    line=HTTP_PORT={{ jenkins_port }}
   become: true
 
 - name: Creating Directory For Groovy Script - Jenkins
@@ -63,6 +63,7 @@
     marker: "## JENKINS ENV VARIABLES"
     block: |
       ADMIN_PASSWORD={{ admin_pwd }}
+      JENKINS_USER={{ jenkins_user }}
       
 - name: Creating Jenkins User and skipping initial setup
   become: true
@@ -82,7 +83,7 @@
 
 - name: "Wait For Jenkins To Come Up"
   uri:
-    url: http://192.168.33.20:9000
+    url: "{{ jenkins_url }}"
     status_code: 403
   register: result
   until: result.status == 403
@@ -93,9 +94,9 @@
 - name: Install build pipeline plugin
   jenkins_plugin:
     name: build-pipeline-plugin
-    url_username: admin
+    url_username: "{{ jenkins_user }}"
     url_password: "{{ admin_pwd }}"
-    url: http://192.168.33.20:9000
+    url: "{{ jenkins_url }}"
   retries: 6
   delay: 3
   register: pipeline_installed
@@ -104,9 +105,9 @@
 - name: Install Git plugin
   jenkins_plugin:
     name: git
-    url_username: admin
+    url_username: "{{ jenkins_user }}"
     url_password: "{{ admin_pwd }}"
-    url: http://192.168.33.20:9000
+    url: "{{ jenkins_url }}"
   retries: 6
   delay: 3
   register: git_installed
@@ -115,9 +116,9 @@
 - name: Install workspace cleanup plugin
   jenkins_plugin:
     name: ws-cleanup
-    url_username: admin
+    url_username: "{{ jenkins_user }}"
     url_password: "{{ admin_pwd }}"
-    url: http://192.168.33.20:9000
+    url: "{{ jenkins_url }}"
   retries: 6
   delay: 3
   register: ws_installed
@@ -126,9 +127,9 @@
 - name: Install workflow aggregator plugin
   jenkins_plugin:
     name: workflow-aggregator
-    url_username: admin
+    url_username: "{{ jenkins_user }}"
     url_password: "{{ admin_pwd }}"
-    url: http://192.168.33.20:9000
+    url: "{{ jenkins_url }}"
   retries: 6
   delay: 3
   register: wa_installed
@@ -142,7 +143,7 @@
 
 - name: "Wait For Jenkins To Come Up"
   uri:
-    url: http://192.168.33.20:9000
+    url: "{{ jenkins_url }}"
     status_code: 403
   register: result
   until: result.status == 403

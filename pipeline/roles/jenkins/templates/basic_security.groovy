@@ -7,10 +7,11 @@ def instance = Jenkins.getInstance()
 def env = System.getenv()
 
 String admin_pwd = env['ADMIN_PASSWORD']
+String admin = env['JENKINS_USER']
 
-println "--> creating local user 'admin'"
+println "--> creating local user '" + admin + "'"
 // Create user with custom pass
-def user = instance.getSecurityRealm().createAccount('admin', admin_pwd)
+def user = instance.getSecurityRealm().createAccount(admin, admin_pwd)
 user.save()
 
 def strategy = new FullControlOnceLoggedInAuthorizationStrategy()

@@ -1,12 +1,27 @@
-// The default value for Admin password
-// Used when env variable ADMIN_PWD is not set
+const yaml = require('js-yaml');
+const fs = require('fs');
+const path = require('path');
 
-var password = 'admin'
-if (process.env.ADMIN_PWD) {
-    password = process.env.ADMIN_PWD
+var password = process.env.ADMIN_PASSWORD || 'admin';
+var jenkins_user;
+var jenkins_url;
+
+try {
+  const vars_file =  path.join(__dirname, "../pipeline/vars/", "vars.yml");
+
+  let fileContents = fs.readFileSync(vars_file);
+  let data = yaml.safeLoad(fileContents);
+
+  jenkins_user = data.jenkins_user;
+  jenkins_url = data.jenkins_url;
+  jenkins_url = jenkins_url.replace('http://', '');
 }
+catch(e) {
+  console.log(e);
+}
+
 const jenkins = require("jenkins")({
-  baseUrl: `http://admin:${password}@192.168.33.20:9000`,
+  baseUrl: `http://${jenkins_user}:${password}@${jenkins_url}`,
   crumbIssuer: true,
   promisify: true
 });

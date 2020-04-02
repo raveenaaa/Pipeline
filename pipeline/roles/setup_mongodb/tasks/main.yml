@@ -69,8 +69,8 @@
 
 - name: Create mongo user
   mongodb_user:
-    database: admin
-    name: mongo_user
+    database: "{{ mongo_db }}"
+    name: "{{ mongo_user }}"
     password: "{{ mongo_pwd }}"
     state: present
     roles: readWrite
@@ -81,9 +81,9 @@
     path: /etc/environment
     marker: "# MONGO ENVIRONMENT VARIABLES"
     block: |
-      APP_PORT=3002
-      MONGO_PORT=27017
-      MONGO_USER=mongo_user
+      APP_PORT={{ app_port }}
+      MONGO_PORT={{ mongo_port }}
+      MONGO_USER={{ mongo_user }}
       MONGO_PASSWORD={{ mongo_pwd }}
-      MONGO_IP=localhost
+      MONGO_IP={{ mongo_ip }}
     state: present

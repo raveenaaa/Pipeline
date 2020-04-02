@@ -41,9 +41,9 @@
       update=all
 
       [jenkins]
-      user=admin
+      user={{ jenkins_user }}
       password={{ admin_pwd }}
-      url=http://192.168.33.20:9000
+      url={{ jenkins_url }}
       query_plugins_info=False
 
 - name: Copy the YAML to setup build job
