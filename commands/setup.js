@@ -27,8 +27,8 @@ exports.builder = (yargs) => {
 
 exports.handler = async (argv) => {
   const { privateKey } = argv;
-  const username = argv['gh-user'];
-  const password = argv['gh-pass'];
+  const username = encodeURIComponent(argv['gh-user']);
+  const password = encodeURIComponent(argv['gh-pass']);
 
   (async () => {
     await run(privateKey, username, password);
