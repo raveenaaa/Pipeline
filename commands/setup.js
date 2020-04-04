@@ -1,49 +1,59 @@
-const child = require("child_process");
-const chalk = require("chalk");
-const path = require("path");
-const os = require("os");
+const child = require('child_process');
+const chalk = require('chalk');
+const path = require('path');
+const os = require('os');
 
-const scpSync = require("../lib/scp");
-const sshSync = require("../lib/ssh");
+const scpSync = require('../lib/scp');
+const sshSync = require('../lib/ssh');
 
-exports.command = "setup";
-exports.desc = "Provision and configure the configuration server";
-exports.builder = yargs => {
+exports.command = 'setup';
+exports.desc = 'Provision and configure the configuration server';
+exports.builder = (yargs) => {
   yargs.options({
     privateKey: {
-      describe: "Install the provided private key on the configuration server",
-      type: "string"
-    }
+      describe: 'Install the provided private key on the configuration server',
+      type: 'string',
+    },
+    'gh-user': {
+      describe: 'GitHub username',
+      type: 'string',
+    },
+    'gh-pass': {
+      describe: 'GitHub password',
+      type: 'string',
+    },
   });
 };
 
-exports.handler = async argv => {
+exports.handler = async (argv) => {
   const { privateKey } = argv;
+  const username = argv['gh-user'];
+  const password = argv['gh-pass'];
 
   (async () => {
-    await run(privateKey);
+    await run(privateKey, username, password);
   })();
 };
 
-async function run(privateKey) {
-  console.log(chalk.greenBright("Installing configuration server!"));
+async function run(privateKey, username, password) {
+  console.log(chalk.greenBright('Installing configuration server!'));
 
-  console.log(chalk.blueBright("Provisioning configuration server..."));
+  console.log(chalk.blueBright('Provisioning configuration server...'));
   let result = child.spawnSync(
     `bakerx`,
-    `run ansible-srv bionic --ip 192.168.33.10 --sync`.split(" "),
-    { shell: true, stdio: "inherit" }
+    `run ansible-srv bionic --ip 192.168.33.10 --sync`.split(' '),
+    { shell: true, stdio: 'inherit' }
   );
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);
   }
 
-  console.log(chalk.blueBright("Provisioning jenkins server..."));
+  console.log(chalk.blueBright('Provisioning jenkins server...'));
   result = child.spawnSync(
     `bakerx`,
-    `run jenkins-srv bionic --ip 192.168.33.20 --memory 3072`.split(" "),
-    { shell: true, stdio: "inherit" }
+    `run jenkins-srv bionic --ip 192.168.33.20 --memory 3072`.split(' '),
+    { shell: true, stdio: 'inherit' }
   );
   if (result.error) {
     console.log(result.error);
@@ -51,21 +61,24 @@ async function run(privateKey) {
   }
 
   console.log(
-    chalk.blueBright("Installing privateKey on configuration server")
+    chalk.blueBright('Installing privateKey on configuration server')
   );
   let identifyFile =
-    privateKey || path.join(os.homedir(), ".bakerx", "insecure_private_key");
+    privateKey || path.join(os.homedir(), '.bakerx', 'insecure_private_key');
   result = scpSync(
     identifyFile,
-    "vagrant@192.168.33.10:/home/vagrant/.ssh/jenkins_rsa"
+    'vagrant@192.168.33.10:/home/vagrant/.ssh/jenkins_rsa'
   );
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);
   }
 
-  console.log(chalk.blueBright("Running init script..."));
-  result = sshSync("/bakerx/pipeline/server-init.sh", "vagrant@192.168.33.10");
+  console.log(chalk.blueBright('Running init script...'));
+  result = sshSync(
+    `/bakerx/pipeline/server-init.sh ${username} ${password}`,
+    'vagrant@192.168.33.10'
+  );
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);
