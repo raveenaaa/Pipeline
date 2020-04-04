@@ -140,11 +140,28 @@
     name: cloudbees-credentials
     url_username: admin
     url_password: '{{ admin_pwd }}'
-    url: http://192.168.33.20:9000
+    url: '{{ jenkins_url }}'
   retries: 6
   delay: 3
   register: cc_installed
   until: cc_installed is not failed
+
+- name: Install credentials binding plugin
+  jenkins_plugin:
+    name: credentials-binding
+    url_username: '{{ jenkins_user }}'
+    url_password: '{{ admin_pwd }}'
+    url: '{{ jenkins_url }}'
+  retries: 6
+  delay: 3
+  register: cb_installed
+  until: cb_installed is not failed
+
+- name: Change Jenkins settings to disable web session check for API calls
+  become: true
+  lineinfile: dest=/etc/default/jenkins
+    regexp=^JAVA_ARGS="-Djava.awt.headless=true"
+    line=JAVA_ARGS="-Djava.awt.headless=true -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true"
 
 - name: Restarting Jenkins
   become: yes
