@@ -1,0 +1,65 @@
+- name: Get crumb request
+  uri:
+    url: 'http://192.168.33.20:9000/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
+    user: admin
+    password: '{{ admin_pwd }}'
+    force_basic_auth: yes
+    return_content: yes
+  register: crumb
+
+# - name: Add git credentials to Jenkins
+#   uri:
+#     method: POST
+#     url: 'http://192.168.33.20:9000/credentials/store/system/domain/_/createCredentials'
+#     user: admin
+#     password: '{{ admin_pwd }}'
+#     force_basic_auth: yes
+#     body_format: json
+#     headers:
+#       Jenkins-Crumb: "{{ crumb.content.split(':')[1] }}"
+#     body: |
+#       {
+#         "": "0",
+#         "credentials": {
+#           "scope": "GLOBAL",
+#           "id": "GIT_CREDENTIALS",
+#           "username": "{{ git_username }}",
+#           "password": "{{ git_password }}",
+#           "description": "Git credentials to clone iTrust",
+#           "$class": "com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl"
+#         }
+#       }
+
+- name: Set crumb_response in variable
+  set_fact:
+    crumb_response: "{{ crumb.content.split(':')[1] }}"
+
+- debug:
+    msg: 'The token is {{ crumb_response }} and username is {{ git_username }}'
+
+- name: Add git credentials to Jenkins
+  uri:
+    url: 'http://192.168.33.20:9000/credentials/store/system/domain/_/createCredentials'
+    method: POST
+    user: admin
+    password: '{{ admin_pwd }}'
+    force_basic_auth: yes
+    headers:
+      Jenkins-Crumb: '{{ crumb_response }}'
+      Content-Type: application/xml
+    body: |
+      <com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl>
+        <scope>GLOBAL</scope>
+        <id>GIT_CREDENTIALS</id>
+        <description>Git credentials to clone iTrust</description>
+        <username>{{ git_username }}</username>
+        <password>{{ git_password }}</password>
+      </com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl>
+
+- name: Copy the YAML to setup build job
+  copy:
+    src: /bakerx/pipeline/iTrust-pipeline.yml
+    dest: /tmp/iTrust-pipeline.yml
+
+- name: Create the build job in jenkins
+  command: jenkins-jobs update /tmp/iTrust-pipeline.yml
