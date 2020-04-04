@@ -13,12 +13,12 @@
     dsl: |
       node {
         stage('Source'){
-          git 'https://github.ncsu.edu/engr-csc326-staff/iTrust2-v6.git'
+          git branch: 'master', credentialsId: 'GIT_CREDENTIALS', url: 'https://github.ncsu.edu/engr-csc326-staff/iTrust2-v6.git'
         }
         stage('Build'){
           echo 'Changing db and email configurations'
           sh '''
-          cd iTrust2-v6/iTrust2/src/main/java/
+          cd iTrust2/src/main/java/
           cp db.properties.template db.properties
           sed 's/password  /password password/g' db.properties > new && mv new db.properties
           cp email.properties.template email.properties
@@ -26,12 +26,12 @@
                         
           echo 'Building database and creating sample data'
           sh '''
-          cd iTrust2-v6/iTrust2/
+          cd iTrust2/
           mvn -f pom-data.xml process-test-classes'''
         }
         stage('Test'){
           sh '''
-          cd iTrust2-v6/iTrust2/
+          cd iTrust2/
           mvn clean test verify org.apache.maven.plugins:maven-checkstyle-plugin:3.1.0:checkstyle'''
         }
       }
