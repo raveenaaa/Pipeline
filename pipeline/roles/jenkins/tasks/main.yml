@@ -18,7 +18,7 @@
 - name: Adding Apt Key For Jenkins
   become: yes
   apt_key:
-    url: "https://jenkins-ci.org/debian/jenkins-ci.org.key"
+    url: 'https://jenkins-ci.org/debian/jenkins-ci.org.key'
     state: present
     validate_certs: no
 
@@ -51,7 +51,7 @@
 - name: Creating Directory For Groovy Script - Jenkins
   become: true
   file:
-    path: "/var/lib/jenkins/init.groovy.d"
+    path: '/var/lib/jenkins/init.groovy.d'
     state: directory
     mode: 0755
     owner: jenkins
@@ -60,17 +60,17 @@
   become: yes
   blockinfile:
     path: /etc/environment
-    marker: "## JENKINS ENV VARIABLES"
+    marker: '## JENKINS ENV VARIABLES'
     block: |
       ADMIN_PASSWORD={{ admin_pwd }}
       JENKINS_USER={{ jenkins_user }}
-      
+
 - name: Creating Jenkins User and skipping initial setup
   become: true
   template:
     force: yes
-    src: "templates/basic_security.groovy"
-    dest: "/var/lib/jenkins/init.groovy.d/basic-security.groovy"
+    src: 'templates/basic_security.groovy'
+    dest: '/var/lib/jenkins/init.groovy.d/basic-security.groovy'
     mode: 0755
     owner: jenkins
 
@@ -81,9 +81,9 @@
     state: restarted
   when: jenkins_install.changed
 
-- name: "Wait For Jenkins To Come Up"
+- name: 'Wait For Jenkins To Come Up'
   uri:
-    url: "{{ jenkins_url }}"
+    url: '{{ jenkins_url }}'
     status_code: 403
   register: result
   until: result.status == 403
@@ -94,9 +94,9 @@
 - name: Install build pipeline plugin
   jenkins_plugin:
     name: build-pipeline-plugin
-    url_username: "{{ jenkins_user }}"
-    url_password: "{{ admin_pwd }}"
-    url: "{{ jenkins_url }}"
+    url_username: '{{ jenkins_user }}'
+    url_password: '{{ admin_pwd }}'
+    url: '{{ jenkins_url }}'
   retries: 6
   delay: 3
   register: pipeline_installed
@@ -105,9 +105,9 @@
 - name: Install Git plugin
   jenkins_plugin:
     name: git
-    url_username: "{{ jenkins_user }}"
-    url_password: "{{ admin_pwd }}"
-    url: "{{ jenkins_url }}"
+    url_username: '{{ jenkins_user }}'
+    url_password: '{{ admin_pwd }}'
+    url: '{{ jenkins_url }}'
   retries: 6
   delay: 3
   register: git_installed
@@ -116,9 +116,9 @@
 - name: Install workspace cleanup plugin
   jenkins_plugin:
     name: ws-cleanup
-    url_username: "{{ jenkins_user }}"
-    url_password: "{{ admin_pwd }}"
-    url: "{{ jenkins_url }}"
+    url_username: '{{ jenkins_user }}'
+    url_password: '{{ admin_pwd }}'
+    url: '{{ jenkins_url }}'
   retries: 6
   delay: 3
   register: ws_installed
@@ -127,13 +127,24 @@
 - name: Install workflow aggregator plugin
   jenkins_plugin:
     name: workflow-aggregator
-    url_username: "{{ jenkins_user }}"
-    url_password: "{{ admin_pwd }}"
-    url: "{{ jenkins_url }}"
+    url_username: '{{ jenkins_user }}'
+    url_password: '{{ admin_pwd }}'
+    url: '{{ jenkins_url }}'
   retries: 6
   delay: 3
   register: wa_installed
   until: wa_installed is not failed
+
+- name: Install cloudbees credentials plugin
+  jenkins_plugin:
+    name: cloudbees-credentials
+    url_username: admin
+    url_password: '{{ admin_pwd }}'
+    url: http://192.168.33.20:9000
+  retries: 6
+  delay: 3
+  register: cc_installed
+  until: cc_installed is not failed
 
 - name: Restarting Jenkins
   become: yes
@@ -141,9 +152,9 @@
     name: jenkins
     state: restarted
 
-- name: "Wait For Jenkins To Come Up"
+- name: 'Wait For Jenkins To Come Up'
   uri:
-    url: "{{ jenkins_url }}"
+    url: '{{ jenkins_url }}'
     status_code: 403
   register: result
   until: result.status == 403
