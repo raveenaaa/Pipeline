@@ -12,7 +12,7 @@
   debconf:
     name: mysql-server
     question: mysql-server/root_password
-    value: "{{ mysql_pwd }}"
+    value: '{{ mysql_pwd }}'
     vtype: password
 
 - name: MySQL root password confirmation
@@ -20,7 +20,7 @@
   debconf:
     name: mysql-server
     question: mysql-server/root_password_again
-    value: "{{ mysql_pwd }}"
+    value: '{{ mysql_pwd }}'
     vtype: password
 
 - name: Install MySQL server
@@ -35,6 +35,7 @@
     state: started
 
 # Install google chrome
+
 - name: Download google chrome
   get_url:
     url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
@@ -49,3 +50,13 @@
   become: yes
   timezone:
     name: America/New_York
+
+- name: Add the git credentials environment variables
+  become: yes
+  blockinfile:
+    path: /etc/environment
+    marker: '# GIT CREDENTIALS'
+    block: |
+      GIT_USERNAME={{ git_username }}
+      GIT_PASSWORD={{ git_password }}
+    state: present
