@@ -11,6 +11,26 @@
     src: /bakerx/pipeline/mutation_driver.js
     dest: mutation_driver.js
 
+- name: Copy script for configuring iTrust repository
+  copy:
+    src: /bakerx/pipeline/email-db-config.sh
+    dest: email-db-config.sh
+
+- name: Change script to an executable
+  file:
+    path: email-db-config.sh
+    mode: '0700'
+
+- name: Copy script for deleting iTrust repository
+  copy:
+    src: /bakerx/pipeline/cleanup-iTrust.sh
+    dest: cleanup-iTrust.sh
+
+- name: Change script to an executable
+  file:
+    path: cleanup-iTrust.sh
+    mode: '0700'
+
 - name: Copy package.json 
   copy:
     src: /bakerx/package.json
@@ -26,3 +46,13 @@
       [client]
       user={{ mysql_user }}
       password={{ mysql_pwd }}
+
+- name: Add the gmail credentials to env vars
+  become: yes
+  blockinfile:
+    path: /etc/environment
+    marker: '## GMAIL ENV VARIABLES'
+    block: |
+      SMTP_USERNAME={{ smtp_username }}
+      SMTP_FROM={{ smtp_from }}
+      SMTP_PASSWORD={{ smtp_password }}
