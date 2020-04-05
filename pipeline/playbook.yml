@@ -14,3 +14,4 @@
     - setup_build_job
     - setup_mutation_files
     - setup_iTrust_build_job
+    - static_analysis
