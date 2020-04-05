@@ -1,0 +1,4 @@
+- name: Copy the static analysis folder to jenkins-srv
+  copy:
+    src: /bakerx/static_analysis
+    dest: /home/vagrant/
