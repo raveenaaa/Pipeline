@@ -7,25 +7,6 @@
     return_content: yes
   register: crumb
 
-# - name: Add git credentials to Jenkins
-#   uri:
-#     url: '{{ jenkins_url }}/credentials/store/system/domain/_/createCredentials'
-#     method: POST
-#     user: '{{ jenkins_user }}'
-#     password: '{{ admin_pwd }}'
-#     force_basic_auth: yes
-#     headers:
-#       Jenkins-Crumb: "{{ crumb.content.split(':')[1] }}"
-#       Content-Type: application/xml
-#     body: |
-#       <com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl>
-#         <scope>GLOBAL</scope>
-#         <id>GIT_CREDENTIALS</id>
-#         <description>Git credentials to clone iTrust</description>
-#         <username>{{ git_username }}</username>
-#         <password>{{ git_password }}</password>
-#       </com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl>
-
 - name: Copy the YAML to setup build job
   copy:
     src: /bakerx/pipeline/iTrust-pipeline.yml
