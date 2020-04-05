@@ -15,3 +15,7 @@ mongo_ip: localhost
 
 # MySQL variables
 mysql_user: root
+
+# Gmail credentials
+smtp_from: csc519s20.11@gmail.com
+smtp_username: csc519s20.11
