@@ -21,16 +21,6 @@
     path: email-db-config.sh
     mode: '0700'
 
-- name: Copy script for deleting iTrust repository
-  copy:
-    src: /bakerx/pipeline/cleanup-iTrust.sh
-    dest: cleanup-iTrust.sh
-
-- name: Change script to an executable
-  file:
-    path: cleanup-iTrust.sh
-    mode: '0700'
-
 - name: Copy package.json 
   copy:
     src: /bakerx/package.json

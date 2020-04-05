@@ -23,16 +23,18 @@ exports.handler = async argv => {
   };
 
 async function run(c) {
-  // Delete any previous copies of iTrust if they exist
-  console.log(chalk.keyword('orange')('Deleting targets folder if it exists...'));
-  let result = await sshSync('cd iTrust2-v6/iTrust2/ && mvn clean', 'vagrant@192.168.33.20');
-
-  console.log(chalk.keyword('orange')('Deleting any previous copies of iTrust2 if exists...'));
-  result = await sshSync('rm -rf iTrust2-v6/', 'vagrant@192.168.33.20');
+  // Check for any running git process and delete;
+  console.log(chalk.keyword('orange')('Delete any git processes...'));
+  let result = await sshSync(`rm -f iTrust2-v6/.git/index.lock`, 'vagrant@192.168.33.20');
+  result = await sshSync(`rm -f iTrust2-v6/.git/head.lock`, 'vagrant@192.168.33.20');
+  if (result.error) {
+    console.log(result.error);
+    process.exit(result.status);
+  }
 
   // Clone a fresh copy of the iTrust repository
   console.log(chalk.keyword('orange')('Cloning the iTrust repository...'));
-  result = await sshSync(`rm -f iTrust2-v6/.git/index.lock ; git clone https://$GIT_USERNAME:$GIT_PASSWORD@github.ncsu.edu/engr-csc326-staff/iTrust2-v6.git`, 'vagrant@192.168.33.20');
+  result = await sshSync(`git clone https://$GIT_USERNAME:$GIT_PASSWORD@github.ncsu.edu/engr-csc326-staff/iTrust2-v6.git`, 'vagrant@192.168.33.20');
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);

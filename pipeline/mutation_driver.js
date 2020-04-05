@@ -20,13 +20,27 @@ if( process.env.NODE_ENV != "test")
     run(iterations);
 }
 
+async function cleanWorkspace(){
+    try{
+        console.log('....... Deleting targets folder using maven clean\n');
+        await child.execSync('cd iTrust2-v6/iTrust2/ && mvn clean -q', {stdio: "inherit"});
+
+        console.log('....... Deleting the rest of the repository\n');
+        await child.execSync('rm -rf iTrust2-v6/iTrust2/');
+        await child.execSync('rm -rf iTrust2-v6/');
+    }
+    catch(e) {
+        console.log(chalk.redBright(e));
+    }
+}
 async function run(iterations=100) {
 
     var files = [];
-    getFiles(codeDir, files);
+    await getFiles(codeDir, files);
     testResults = await mutationTesting(files, iterations);
     orderedTestNames = await prioritize(testResults);
     await saveReports(orderedTestNames, testResults);
+    await cleanWorkspace();
 }
 
 function saveReports(names, testResults) {
@@ -34,8 +48,9 @@ function saveReports(names, testResults) {
     for (name of names) {
         passed = testResults[name].passed;
         failed = testResults[name].failed;
+        total = testResults[name].total;
 
-        data += `${name} => Passed: ${passed} Failed: ${failed}\n`
+        data += `${name} => Passed: ${passed} Failed: ${failed} Total: ${total}\n`
     }
     console.log('********** Test Report **********');
     console.log(chalk.green(data))
@@ -107,14 +122,13 @@ async function mutationTesting(filePaths,iterations)
         var error = null
         numberOfFiles = fuzzer.random().integer(1, 10);
         
-
         try
         {
             console.log('....... Dropping existing database');
             await child.execSync(`mysql --defaults-extra-file=mysql_config.txt -e 'DROP DATABASE IF EXISTS iTrust2'`, {stdio: 'pipe'});
 
             console.log(chalk.cyan('....... Generating the Test Data'));
-            await child.execSync('cd iTrust2-v6/iTrust2 && mvn -f pom-data.xml process-test-classes', {stdio: 'pipe', maxBuffer: 1024 * 1024 * 1024, timeout: 420000});
+            await child.execSync('cd iTrust2-v6/iTrust2 && mvn -f pom-data.xml process-test-classes', {stdio: 'pipe', maxBuffer: 1024 * 1024 * 1024, timeout: 480000});
 
             mutateFiles(fileChoice, filePaths, numberOfFiles)
             
@@ -180,7 +194,7 @@ async function updateResultMap(testMap, testReports){
         
         for (var test of tests) {
             if (!testMap.hasOwnProperty(test.name)){
-                testMap[test.name] = {name: test.name, passed: 0, failed: 0}
+                testMap[test.name] = {name: test.name, passed: 0, failed: 0, total: 0}
             }
 
             if (test.status == 'passed')
@@ -191,6 +205,7 @@ async function updateResultMap(testMap, testReports){
             {
                 testMap[test.name].failed++;
             }
+            testMap[test.name].total = testMap[test.name].passed + testMap[test.name].failed;
         }
     }
     return testMap;
