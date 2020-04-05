@@ -1,35 +1,51 @@
 - name: Get crumb request
   uri:
-    url: 'http://192.168.33.20:9000/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
-    user: admin
+    url: '{{ jenkins_url }}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
+    user: '{{ jenkins_user }}'
     password: '{{ admin_pwd }}'
     force_basic_auth: yes
     return_content: yes
   register: crumb
 
-- name: Add git credentials to Jenkins
-  uri:
-    url: 'http://192.168.33.20:9000/credentials/store/system/domain/_/createCredentials'
-    method: POST
-    user: admin
-    password: '{{ admin_pwd }}'
-    force_basic_auth: yes
-    headers:
-      Jenkins-Crumb: "{{ crumb.content.split(':')[1] }}"
-      Content-Type: application/xml
-    body: |
-      <com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl>
-        <scope>GLOBAL</scope>
-        <id>GIT_CREDENTIALS</id>
-        <description>Git credentials to clone iTrust</description>
-        <username>{{ git_username }}</username>
-        <password>{{ git_password }}</password>
-      </com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl>
+# - name: Add git credentials to Jenkins
+#   uri:
+#     url: '{{ jenkins_url }}/credentials/store/system/domain/_/createCredentials'
+#     method: POST
+#     user: '{{ jenkins_user }}'
+#     password: '{{ admin_pwd }}'
+#     force_basic_auth: yes
+#     headers:
+#       Jenkins-Crumb: "{{ crumb.content.split(':')[1] }}"
+#       Content-Type: application/xml
+#     body: |
+#       <com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl>
+#         <scope>GLOBAL</scope>
+#         <id>GIT_CREDENTIALS</id>
+#         <description>Git credentials to clone iTrust</description>
+#         <username>{{ git_username }}</username>
+#         <password>{{ git_password }}</password>
+#       </com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl>
 
 - name: Copy the YAML to setup build job
   copy:
     src: /bakerx/pipeline/iTrust-pipeline.yml
     dest: /tmp/iTrust-pipeline.yml
+
+- name: Setup database properties for the build job
+  become: true
+  lineinfile:
+    path: /tmp/iTrust-pipeline.yml
+    insertafter: cp db.properties.template db.properties
+    line: "          sed 's/password /password {{ mysql_pwd }}/g' db.properties > new && mv new db.properties"
+    state: present
+
+- name: Setup database properties for the build job
+  become: true
+  lineinfile:
+    path: /tmp/iTrust-pipeline.yml
+    insertafter: cp email.properties.template email.properties
+    line: "          sed 's/from /from {{ smtp_from }}/g;s/username /username {{ smtp_username }}/g;s/password /password {{ smtp_password }}/g' email.properties > new && mv new email.properties'''"
+    state: present
 
 - name: Create the build job in jenkins
   command: jenkins-jobs update /tmp/iTrust-pipeline.yml
