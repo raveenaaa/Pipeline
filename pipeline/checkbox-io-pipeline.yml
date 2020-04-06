@@ -20,6 +20,20 @@
           cd server-side/site
           pm2 start server.js'''
         }
+        stage('Static Analysis'){
+          sh '''
+          sudo npm install /home/vagrant/static_analysis/
+          node /home/vagrant/static_analysis/analysis.js server-side/site/marqdown.js
+          node /home/vagrant/static_analysis/analysis.js server-side/site/db.js
+          node /home/vagrant/static_analysis/analysis.js server-side/site/server.js
+          node /home/vagrant/static_analysis/analysis.js server-side/site/test/listing.js
+          node /home/vagrant/static_analysis/analysis.js server-side/site/test/render.js
+          node /home/vagrant/static_analysis/analysis.js server-side/site/routes/admin.js
+          node /home/vagrant/static_analysis/analysis.js server-side/site/routes/create.js
+          node /home/vagrant/static_analysis/analysis.js server-side/site/routes/csv.js
+          node /home/vagrant/static_analysis/analysis.js server-side/site/routes/studyModel.js
+          node /home/vagrant/static_analysis/analysis.js server-side/site/routes/upload.js'''
+        }
         stage('Test'){
           sh '''
           cd server-side/site

@@ -12,7 +12,7 @@
 - name: install openjdk
   become: yes
   apt:
-    name: openjdk-8-jdk
+    name: openjdk-11-jdk
     state: present
 
 - name: Adding Apt Key For Jenkins

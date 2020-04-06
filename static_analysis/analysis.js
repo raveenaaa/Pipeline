@@ -20,7 +20,6 @@ function main()
 		var builder = builders[node];
 		builder.report();
 	}
-
 }
 
 
@@ -61,6 +60,24 @@ function FunctionBuilder()
 				    this.LongMethod,
 			        this.MaxMessageChains, this.MaxNestingDepth)
 		);
+
+		if(this.LongMethod > 100)
+		{
+			console.log("Long method detected in function - " + this.FunctionName + " (LOC: " + this.LongMethod + ")");
+			process.exit(1);
+		}
+
+		if(this.MaxMessageChains > 10)
+		{
+			console.log("Long message chain detected in function - " + this.FunctionName + " (Chain Length: " + this.MaxMessageChains + ")");
+			process.exit(1);
+		}
+
+		if(this.MaxNestingDepth > 5)
+		{
+			console.log("Maximum Nesting Depth exceeded in function - " + this.FunctionName + " (Nesting Depth: " + this.MaxNestingDepth + ")");
+			process.exit(1);
+		}
 	}
 };
 
@@ -127,20 +144,6 @@ function complexity(filePath)
 	// Tranverse program with a function visitor.
 	traverseWithParents(ast, function (node) 
 	{
-		// if(node.type==='Literal' && typeof(node.value)==='string')
-		// {
-		// 	fileBuilder.Strings++;
-		// }
-
-		// if(node.type==='Identifier' && node.name==='require')
-		// {
-		// 	fileBuilder.PackageComplexity++;
-		// }
-		
-		// if(node.type==='BinaryExpression' && (node.operator==='<' || node.operator==='>' || node.operator==='<=' || node.operator==='>='))
-		// {
-		// 	fileBuilder.Comparisons++;
-		// }
 		if (node.type === 'FunctionDeclaration') 
 		{
 			var builder = new FunctionBuilder();
@@ -150,48 +153,10 @@ function complexity(filePath)
 			builder.ParameterCount = node.params.length;
 			var maximumlength = 0;
 			var chainlength=0;
-			var maxcond = 0;
-			var logicalcount = 0;
 			builders[builder.FunctionName] = builder;
 
 			traverseWithParents(node, function(node)
 			{
-				// Count number of return statements in a function.
-				// if(node.type === 'ReturnStatement')
-				// {
-				// 	builder.ReturnCount++;
-				// }
-
-				// Calculate Simple Cyclomatic Complexity.
-				// if(isDecision(node))
-				// {
-				// 	builder.SimpleCyclomaticComplexity++;
-				// }
-
-				// Count MaxConditions.
-				// if(node.type === 'IfStatement')
-				// {
-				// 	logicalcount = 0;
-				// 	flag = false;
-				// 	traverseWithParents(node, function(node)
-				// 	{
-				// 		if(node.type === 'LogicalExpression')
-				// 		{
-				// 			logicalcount++;
-				// 			flag = true;
-				// 		}	
-				// 		if(maxcond<logicalcount)
-				// 		{
-				// 			maxcond = logicalcount;
-				// 		}
-				// 	});
-				// 	if(flag == true)
-				// 	{
-				// 		builder.MaxConditions = maxcond+1;
-				// 	}
-				// }
-				
-
 				// Count Max Message Chains.
 				if(node.type === 'MemberExpression')
 				{
@@ -208,9 +173,13 @@ function complexity(filePath)
 				}
 
 				// Calculate Max Nesting Depth.
-				if(isIfStatement(node))
+				if (node.type === 'IfStatement')
 				{
-					builder.MaxNestingDepth++;
+					current_count = calculateDepth(node);
+					if (current_count > builder.MaxNestingDepth)
+					{
+						builder.MaxNestingDepth = current_count;
+					}
 				}
 				
 			});
@@ -239,22 +208,83 @@ function childrenLength(node)
 	return count;
 }
 
+// Recursive function to calculate the depth of if statements
+function calculateDepth(node)
+{
+	if ( !node || node.length === 0 )
+	 {
+		return 0;
+	}
+
+	if (isDecision(node))
+	{
+		depth = 0;
+		if(node.type === 'IfStatement') 
+		{
+			if(node.consequent)
+			{
+				if(node.consequent.type == "BlockStatement")
+				{
+					for (prop in node.consequent.body)
+					{
+						current_count = calculateDepth(node.consequent.body[prop]);
+						if(current_count > depth){
+							depth = current_count;
+						} 
+					}
+				} else {
+						current_count = calculateDepth(node.consequent);
+						if(current_count > depth){
+							depth = current_count;
+						} 
+				}
+			}
+
+			if( node.alternate ){
+				if(node.alternate.type == "BlockStatement"){
+					for (prop in node.alternate.body) {
+						current_count = calculateDepth(node.alternate.body[prop]);
+						if(current_count > depth){
+							depth = current_count;
+						} 
+					}
+				} else {
+						current_count = calculateDepth(node.alternate);
+						if(current_count > depth){
+							depth = current_count;
+						} 
+				}
+			}
+			return depth + 1;
+		}
+		else {
+			if(node.body.type == "BlockStatement"){
+				for (prop in node.body.body) {
+					current_count = calculateDepth(node.body.body[prop]);
+					if(current_count > depth){
+						depth = current_count;
+					} 
+				}
+			} else {
+				for (prop in node.body) {
+					current_count = calculateDepth(node.body[prop]);
+					if(current_count > depth){
+						depth = current_count;
+					} 
+				}
+			}
+		}
+	} else {
+		return 0;
+	}
+}
+
 
 // Helper function for checking if a node is a "decision type node"
 function isDecision(node)
 {
 	if( node.type == 'IfStatement' || node.type == 'ForStatement' || node.type == 'WhileStatement' ||
 		 node.type == 'ForInStatement' || node.type == 'DoWhileStatement')
-	{
-		return true;
-	}
-	return false;
-}
-
-// Helper function to check if statements
-function isIfStatement(node)
-{
-	if( node.type == 'IfStatement')
 	{
 		return true;
 	}
