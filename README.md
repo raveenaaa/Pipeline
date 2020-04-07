@@ -72,15 +72,40 @@ These were configured using the `blockinfile` module of ansible and the variable
 
 #### Screencast:
 
-- https://www.youtube.com/watch?v=z7zuAcYShhg&feature=youtu.be
+The screencast for Milestone 1 can be founf [here](https://www.youtube.com/watch?v=z7zuAcYShhg&feature=youtu.be).
 
 ## Milestone 2 Report
 
 This milestone focused on building the iTrust pipeline in Jenkins using Ansible, static code analysis and implementing a test suite analysis for detecting useful tests.
 
-#### Task 1 - 🛠️Automatically configure a build environment and build job (iTrust)
+#### Task 1 - 🛠️ Automatically configure a build environment and build job (iTrust)
 
-In this task
+- The `ansible-srv` from Milestone 1 was used to setup the build environment for iTrust on the `jenkins-srv`.
+  - Installed the follwoing:
+    - maven
+    - mysql
+    - google chrome
+    - cloudbees-credentials plugin
+    - credentials-binding plugin
+  - Change timezone to America/New_York for the tests to run
+  - Added new arguments `--gh-user` and `--gh-pass` to the `pipeline setup` command
+- Created a build job for iTrust
+  - Update Jenkins `JAVA_ARGS` to exclude the web session check for crumb validation
+  - Add git credentials to Jenkins Credentials Store that is used to clone the iTrust repo
+  - Create a build job to build iTrust and run the various tests
+- Hid all secrets
+
+To setup the pipeline run,
+
+```
+pipeline setup --gh-user <username> --gh-pass <password>
+```
+
+and to trigger the build job run,
+
+```
+pipeline build iTrust
+```
 
 #### Task 2 - 🧪 Implement a test suite analysis for detecting useful tests
 
@@ -92,4 +117,4 @@ In this task
 
 #### Screencast:
 
-- The screencast can be found here.
+The screencast for Milestone 2 can be found [here](https://youtu.be/8NVG1skrCVQ).
