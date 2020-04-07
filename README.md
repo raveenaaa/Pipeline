@@ -3,9 +3,9 @@
 ## Checkpoint Report
 
 A link to Milestone 1 checkpoint report can be found [here](/CHECKPOINT.md).  
-A link to Milestone 2 checkpoint report can be found [here](/CHECKPOINT-M2.md).  
+A link to Milestone 2 checkpoint report can be found [here](/CHECKPOINT-M2.md).
 
-## Milestone Report
+## Milestone 1 Report
 
 This milestone focused on building a pipeline in Jenkins using Ansible.
 
@@ -17,10 +17,11 @@ Clone the repository. To setup the pipleline, run:
 pipeline setup
 ```
 
-Wait for the setup to complete. 
+Wait for the setup to complete.
 
-To run the build job we need to supply the admin password which is used in `build.js` to generate the jenkins url. 
-* You can do this by setting an environment variable `ADMIN_PWD` in your local environment. If not the code will stick to the default value we have set.
+To run the build job we need to supply the admin password which is used in `build.js` to generate the jenkins url.
+
+- You can do this by setting an environment variable `ADMIN_PWD` in your local environment. If not the code will stick to the default value we have set.
 
 To build the checkbox.io project, run:
 
@@ -32,32 +33,33 @@ Check the displayed build log to see if the build `PASSED` or `FAILED`.
 
 #### Task 1 - Automatically configure a jenkins server
 
-- In this task, a Jenkins server was configured completely using Ansible and the plugins required for building the pipeline were installed.  
-- A groovy script was created to turn off the initial jenkins setup wizard and automatically create a user for authentication. An attempt to do this task by just setting the line `JAVA_ARGS="-Djenkins.install.runSetupWizard=false"` in the jenkins file did not succeed. A task to restart the Jenkins server was included for allowing the changes to be applied.  
+- In this task, a Jenkins server was configured completely using Ansible and the plugins required for building the pipeline were installed.
+- A groovy script was created to turn off the initial jenkins setup wizard and automatically create a user for authentication. An attempt to do this task by just setting the line `JAVA_ARGS="-Djenkins.install.runSetupWizard=false"` in the jenkins file did not succeed. A task to restart the Jenkins server was included for allowing the changes to be applied.
 - For the installation of plugins, a retry property was added in the ansible task to avoid possible failure due to trivial issues.
-- The following plugins were installed to facilitate the build process:  
-  * Build Pipeline (build-pipeline-plugin)
-  * Git (git)
-  * Workspace Cleanup (ws-cleanup)
-  * Pipeline (workflow-aggregator)
-  
+- The following plugins were installed to facilitate the build process:
+
+  - Build Pipeline (build-pipeline-plugin)
+  - Git (git)
+  - Workspace Cleanup (ws-cleanup)
+  - Pipeline (workflow-aggregator)
+
 #### Task 2 - Automatically configure a build environment
 
 In this task we configured the build environment for [checkbox.io](https://github.com/chrisparnin/checkbox.io), a nodejs web application. Checkbox.io has dependencies on nginx, node, and mongodb. All of these were installed using separate ansible roles:
 
-* __[MongoDB-4.2.3](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/)__ : For this we had two options. Installation from Ubuntu Repository or from Mongo's own site repository. We chose the latter since that guarantees us the latest version of MongoDB.
-* __Node__: We downloaded the version 12.16.1 which is the latest version
-* __Nginx__: We downloaded the version 1.14.0
+- **[MongoDB-4.2.3](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/)** : For this we had two options. Installation from Ubuntu Repository or from Mongo's own site repository. We chose the latter since that guarantees us the latest version of MongoDB.
+- **Node**: We downloaded the version 12.16.1 which is the latest version
+- **Nginx**: We downloaded the version 1.14.0
 
 After installing the dependencies we create a mongo user with a password and `readWrite` role. The password is secured in the `vars/vars.yml` file using `ansible-vault`
 
 Further we defined the following environment variables:
 
-* `APP_PORT=3002`
-* `MONGO_PORT=27017`
-* `MONGO_USER=<user>`
-* `MONGO_PASSWORD=<pass>`
-* `MONGO_IP=localhost`
+- `APP_PORT=3002`
+- `MONGO_PORT=27017`
+- `MONGO_USER=<user>`
+- `MONGO_PASSWORD=<pass>`
+- `MONGO_IP=localhost`
 
 These were configured using the `blockinfile` module of ansible and the variables were permanently added to `/etc/environment` file
 
@@ -69,4 +71,25 @@ These were configured using the `blockinfile` module of ansible and the variable
 - Environment variables for mongodb such as `MONGO_USER` and `MONGO_PASSWORD` need to be set before jenkins is installed, to make sure that they are available from within Jenkins. If not, the database connection will fail while trying to do `npm test`.
 
 #### Screencast:
-* https://www.youtube.com/watch?v=z7zuAcYShhg&feature=youtu.be
+
+- https://www.youtube.com/watch?v=z7zuAcYShhg&feature=youtu.be
+
+## Milestone 2 Report
+
+This milestone focused on building the iTrust pipeline in Jenkins using Ansible, static code analysis and implementing a test suite analysis for detecting useful tests.
+
+#### Task 1 - 🛠️Automatically configure a build environment and build job (iTrust)
+
+In this task
+
+#### Task 2 - 🧪 Implement a test suite analysis for detecting useful tests
+
+In this task
+
+#### Task 3 - ✅ Implement a static analysis for checkbox.io
+
+In this task
+
+#### Screencast:
+
+- The screencast can be found here.
