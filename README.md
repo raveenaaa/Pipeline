@@ -113,7 +113,12 @@ After 100 iterations, it generates a [report](https://github.ncsu.edu/cscdevops-
 
 #### Task 3 - ✅ Implement a static analysis for checkbox.io
 
-In this task
+In this task, we implement a static JavaScript code analyzer using esprima. The static analysis is performed on all the javascript files present inside checkbox.io. The analyzer is implemented to detect the following code smells:
+- Long Methods (LOC > 100)
+- Long Message Chains (Chain length > 10)
+- Max Nesting Depth (Depth > 5)
+
+The jenkins build job for checkbox.io was extended to include a static analysis stage. In the build job, the analyzer is run across all the JS files and if any of the code smells are detected, the build will automatically fail.
 
 #### Screencast:
 
