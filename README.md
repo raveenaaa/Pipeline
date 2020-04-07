@@ -109,11 +109,41 @@ pipeline build iTrust
 
 #### Task 2 - 🧪 Implement a test suite analysis for detecting useful tests
 
-In this task
+##### Fuzzer
+We developed a fuzzer that performs the following fuzzing operations on 10% lines of a given file:
+
+   - swap "==" with "!="
+   - swap 0 with 1
+   - change content of "strings" in code.
+   - randomly change numbers in code
+   - swap "<" with ">"
+   - swap true with false
+
+##### Test prioritization analysis
+
+We used a driver node.js code that runs the entire test suite for 100 iterations and generates the report. In each iteration it does the following tasks for up to 10% of the files:
+
+* Drop exisiting database
+* Regenerate the test classes using `mvn -f pom-data.xml process-test-classes`
+* Generate random changes with fuzzer.
+* If changes result in compile failures, discard changes and restart process.
+* Run tests with `mvn clean test verify`.
+* Record which test cases have failed, and which have passed.
+* Reset code, discarding your changes.
+
+After 100 iterations, it generates a [report](https://github.ncsu.edu/cscdevops-spring2020/DEVOPS-11/blob/master/pipeline/report.txt). The format of the report is as follows:
+```
+<Classname>:<Testname> => Passed: _ Failed: _ Total: _
+```
 
 #### Task 3 - ✅ Implement a static analysis for checkbox.io
 
-In this task
+In this task, we implement a static JavaScript code analyzer using esprima. The static analysis is performed on all the javascript files present inside checkbox.io. The analyzer is implemented to detect the following code smells:
+- Long Methods (LOC > 100)
+- Long Message Chains (Chain length > 10)
+- Max Nesting Depth (Depth > 5)
+
+The jenkins build job for checkbox.io was extended to include a static analysis stage. In the build job, the analyzer is run across all the JS files and if any of the code smells are detected, the build will automatically fail.
 
 #### Screencast:
 
