@@ -2,3 +2,13 @@
 192.168.33.20   ansible_ssh_private_key_file=~/.ssh/jenkins_rsa    ansible_user=vagrant
 [jenkins:vars]
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+[blue]
+192.168.50.25   ansible_ssh_private_key_file=~/.ssh/jenkins_rsa    ansible_user=vagrant
+[blue:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+[green]
+192.168.50.30   ansible_ssh_private_key_file=~/.ssh/jenkins_rsa    ansible_user=vagrant
+[green:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'

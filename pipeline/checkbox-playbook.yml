@@ -1,0 +1,9 @@
+# Playbook that installs checbox dependencies on blue and green servers
+- hosts: blue, green
+  vars_files:
+    - /bakerx/pipeline/vars/vars.yml
+    - /bakerx/pipeline/vars/secrets.yml
+  roles:
+    - setup_nodejs
+    - setup_mongodb
+    - setup_nginx
