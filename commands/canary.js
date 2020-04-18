@@ -17,7 +17,8 @@ try {
   
     monitor_ip = data.monitor_ip;
     green_ip =  data.green_ip;
-    blue_ip = data.blue_ip
+    blue_ip = data.blue_ip;
+    ansible_ip = data.ansible_ip;
   }
   catch(e) {
     console.log(e);
@@ -46,15 +47,51 @@ async function provision_servers() {
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
 }
 
+async function clone_repositories(blue_branch, green_branch) {
+  // Clone checkbox microservice on blue
+  console.log(chalk.blueBright('Cloning the checkbox microservice on blue...'));
+  let result = await sshSync(`git clone https://github.com/chrisparnin/checkbox.io-micro-preview.git`, `vagrant@${blue_ip}`);
+  if (result.error) {
+    console.log(result.error);
+    process.exit(result.status);
+  }
+
+  // Switch to blue_branch
+  console.log(chalk.blueBright(`Switching to ${blue_branch}...`));
+  result = await sshSync(`cd checkbox.io-micro-preview && git checkout ${blue_branch}`, `vagrant@${blue_ip}`);
+  if (result.error) {
+    console.log(result.error);
+    process.exit(result.status);
+  }
+
+  // Clone checkbox microservice on green
+  console.log(chalk.greenBright('Cloning the checkbox microservice on blue...'));
+  result = await sshSync(`git clone https://github.com/chrisparnin/checkbox.io-micro-preview.git`, `vagrant@${green_ip}`);
+  if (result.error) {
+    console.log(result.error);
+    process.exit(result.status);
+  }
+
+  // Switch to green_branch
+  console.log(chalk.blueBright(`Switching to ${green_branch}...`));
+  result = await sshSync(`cd checkbox.io-micro-preview && git checkout ${green_branch}`, `vagrant@${green_ip}`);
+  if (result.error) {
+    console.log(result.error);
+    process.exit(result.status);
+  }
+}
+
 async function run(blue_branch, green_branch) {
     await provision_servers();
 
     console.log(chalk.blueBright('Running playbook to install dependencies...'));
     const cmd = `ansible-playbook --vault-password-file vault_pass.txt /bakerx/pipeline/checkbox-playbook.yml -i /bakerx/pipeline/inventory`;
-    result = sshSync(cmd,'vagrant@192.168.33.10');
+    result = sshSync(cmd,`vagrant@${ansible_ip}`);
     if (result.error) {
         console.log(result.error);
         process.exit(result.status);
     }
+
+    await clone_repositories(blue_branch, green_branch);
 
 }

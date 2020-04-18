@@ -1,6 +1,9 @@
 ---
 # Variables for the entire playbook
 
+# Ansible variables
+ansible_ip: 192.168.33.10
+
 # Jenkins variables
 jenkins_port: 9000
 jenkins_url: http://192.168.33.20:9000
