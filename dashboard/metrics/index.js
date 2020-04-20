@@ -4,6 +4,9 @@ const got = require('got');
 const fs = require('fs');
 const path = require('path');
 
+const PROD = 'production';
+const LOCAL = 'local';
+
 // We need your host computer ip address in order to use port forwards to servers.
 let ip = ''
 try
@@ -16,14 +19,33 @@ catch(e)
 	throw new Error("Missing required ip.txt file");	
 }
 
-/// Servers data being monitored.
-var servers = 
-[
-	{name: "computer", status: "#cccccc", scoreTrend : []},
-	{name: "alpine-01",url:`http://${ip}:9001/`, status: "#cccccc",  scoreTrend : [0]},
-	{name: "alpine-02",url:`http://${ip}:9002/`, status: "#cccccc",  scoreTrend : [0]},
-	{name: "alpine-03",url:`http://${ip}:9003/`, status: "#cccccc",  scoreTrend : [0]}
-];
+// Servers data being monitored.
+
+// Get the environment type from commandline args
+// `local` uses blue_ip, green_ip which will also be provided in the args
+// `production` uses the ip.txt file
+let args = process.argv.slice(2);
+const environment = args[0];
+var servers;
+
+if (environment == LOCAL ) {
+	const blue_ip = args[1];
+	const green_ip = args[2];
+	servers = 
+	[
+		
+		{name: 'blue', url: `http://${blue_ip}:3001/`, status: "#cccccc",  scoreTrend : [0]},
+		{name: 'green', url: `http://${green_ip}:3001/`, status: "#cccccc",  scoreTrend : [0]},
+	];
+}
+//******Set the ips for production servers*************
+else if (environment == PROD){
+	servers = 
+	[
+	{name: "alpine-01", url:`http://${ip}:9001/`, status: "#cccccc",  scoreTrend : [0]},
+	{name: "alpine-02", url:`http://${ip}:9002/`, status: "#cccccc",  scoreTrend : [0]}
+	];
+}
 
 
 function start(app)
@@ -31,7 +53,7 @@ function start(app)
 	////////////////////////////////////////////////////////////////////////////////////////
 	// DASHBOARD
 	////////////////////////////////////////////////////////////////////////////////////////
-	const io = require('socket.io')(3000);
+	const io = require('socket.io')(3005);
 	// Force websocket protocol, otherwise some browsers may try polling.
 	io.set('transports', ['websocket']);
 	// Whenever a new page/client opens a dashboard, we handle the request for the new socket.

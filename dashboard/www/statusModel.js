@@ -38,7 +38,7 @@ $(document).ready( function()
         }
     });
 
-    const host = `${window.location.hostname}:3000`;
+    const host = `${window.location.hostname}:3005`;
     console.log(`Connecting to ${host}`);
     var socket = io.connect(host, {
         upgrade: false,
