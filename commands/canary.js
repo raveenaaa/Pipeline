@@ -33,65 +33,110 @@ exports.handler = async (argv) => {
 };
 
 async function provision_servers() {
-    console.log(chalk.greenBright('Provisioning Proxy server...'));
-    let result = child.spawnSync(`bakerx`, `run monitor queues --ip ${monitor_ip} --sync`.split(' '), 
+    console.log(chalk.keyword('orange')('Provisioning Proxy server...'));
+    let result = child.spawnSync(`bakerx`, `run proxy queues --ip ${monitor_ip} --sync`.split(' '), 
                                 {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../dashboard")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
     console.log(chalk.blueBright('Provisioning blue server...'));
-    result = child.spawnSync(`bakerx`, `run blue queues --ip ${blue_ip}`.split(' '), {shell:true, stdio: 'inherit'} );
+    result = child.spawnSync(`bakerx`, `run blue queues --ip ${blue_ip} --sync`.split(' '), 
+                            {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../agent")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
-
-    console.log(chalk.blueBright('Provisioning green server...'));
-    result = child.spawnSync(`bakerx`, `run green queues --ip ${green_ip}`.split(' '), {shell:true, stdio: 'inherit'} );
+    
+    console.log(chalk.greenBright('Provisioning green server...'));
+    result = child.spawnSync(`bakerx`, `run green queues --ip ${green_ip} --sync`.split(' '), 
+                            {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../agent")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
 }
 
-async function clone_repositories(blue_branch, green_branch) {
-  // Clone checkbox microservice on blue
-  console.log(chalk.blueBright('Cloning the checkbox microservice on blue...'));
-  let result = await sshSync(`git clone https://github.com/chrisparnin/checkbox.io-micro-preview.git`, `vagrant@${blue_ip}`);
+async function clone_repositories(branch, ip) {
+  // Clone checkbox microservice
+  console.log(chalk.keyword('orange')('Cloning the checkbox microservice...'));
+  let result = await sshSync(`git clone https://github.com/chrisparnin/checkbox.io-micro-preview.git`, `vagrant@${ip}`);
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);
   }
 
-  // Switch to blue_branch
-  console.log(chalk.blueBright(`Switching to ${blue_branch}...`));
-  result = await sshSync(`cd checkbox.io-micro-preview && git checkout ${blue_branch}`, `vagrant@${blue_ip}`);
+  // Switch to branch
+  console.log(chalk.keyword('orange')(`Switching to ${branch}...`));
+  result = await sshSync(`cd checkbox.io-micro-preview && git checkout ${branch}`, `vagrant@${ip}`);
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);
   }
 
-  // Clone checkbox microservice on green
-  console.log(chalk.greenBright('Cloning the checkbox microservice on blue...'));
-  result = await sshSync(`git clone https://github.com/chrisparnin/checkbox.io-micro-preview.git`, `vagrant@${green_ip}`);
+  // Install dependencies
+  console.log(chalk.keyword('orange')(`Install dependencies...`));
+  result = await sshSync(`cd checkbox.io-micro-preview && npm install`, `vagrant@${ip}`);
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);
+  }
+}
+
+async function start_dashboard() {
+  let result = await sshSync(`cd /bakerx && npm install`, `vagrant@${monitor_ip}`);
+  if (result.error) {
+    console.log(result.error);
   }
 
-  // Switch to green_branch
-  console.log(chalk.blueBright(`Switching to ${green_branch}...`));
-  result = await sshSync(`cd checkbox.io-micro-preview && git checkout ${green_branch}`, `vagrant@${green_ip}`);
-  if (result.error) {
-    console.log(result.error);
-    process.exit(result.status);
-  }
+  console.log(chalk.keyword('orange')('Starting the Dashboard...'));
+  sshSync(`cd /bakerx && sudo npm install forever -g && forever stopall && forever start bin/www local ${blue_ip} ${green_ip}`, `vagrant@${monitor_ip}`);
+}
+
+async function start_agents() {
+  console.log(chalk.blueBright('Starting the agent on blue...'));
+  result = sshSync(`cd /bakerx && forever start index.js blue ${monitor_ip}`, `vagrant@${blue_ip}`);
+
+  console.log(chalk.greenBright('Starting the agent on green...'));
+  result = sshSync(`cd /bakerx && forever start index.js green ${monitor_ip}`, `vagrant@${green_ip}`);
+}
+
+async function start_checkbox() {
+  console.log(chalk.blueBright('Starting checkbox microservice on blue...'));
+  result = sshSync(`cd checkbox.io-micro-preview/ && forever start index.js`, `vagrant@${blue_ip}`);
+
+  console.log(chalk.greenBright('Starting checkbox microservice on green...'));
+  result = sshSync(`cd checkbox.io-micro-preview/ && forever start index.js`, `vagrant@${green_ip}`);
+
+}
+
+async function start_servers() {
+  console.log(chalk.blueBright(`Blue server listening at '/`));
+  result = sshSync(`cd /bakerx && npm install && sudo npm install forever -g && forever stopall && forever start server.js`, `vagrant@${blue_ip}`);
+
+  console.log(chalk.greenBright(`Green server listening at '/`));
+  result = sshSync(`cd /bakerx && npm install && sudo npm install forever -g && forever stopall && forever start server.js`, `vagrant@${green_ip}`);
+}
+
+async function run_playbook() {
+  console.log(chalk.blueBright('Running playbook to install dependencies...'));
+    const cmd = `ansible-playbook --vault-password-file vault_pass.txt /bakerx/pipeline/checkbox-playbook.yml -i /bakerx/pipeline/inventory`;
+    result = await sshSync(cmd,`vagrant@${ansible_ip}`);
+    if (result.error) {
+        console.log(result.error);
+        process.exit(result.status);
+    }
 }
 
 async function run(blue_branch, green_branch) {
     await provision_servers();
 
-    console.log(chalk.blueBright('Running playbook to install dependencies...'));
-    const cmd = `ansible-playbook --vault-password-file vault_pass.txt /bakerx/pipeline/checkbox-playbook.yml -i /bakerx/pipeline/inventory`;
-    result = sshSync(cmd,`vagrant@${ansible_ip}`);
-    if (result.error) {
-        console.log(result.error);
-        process.exit(result.status);
-    }
+    await run_playbook()
 
-    await clone_repositories(blue_branch, green_branch);
+    // console.log(chalk.blueBright('Setting up blue...'));
+    await clone_repositories(blue_branch, blue_ip);
+    
+    // console.log(chalk.greenBright('Setting up green...'));
+    await clone_repositories(green_branch, green_ip);
 
+    // Making our green and blue servers listen at route '/'
+    await start_servers();
+
+    await start_checkbox();    
+
+    await start_dashboard();    
+
+    await start_agents();    
 }
