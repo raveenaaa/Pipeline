@@ -8,10 +8,13 @@ For this checkpoint, the 3 general tasks were assigned as follows:
 #### Provision cloud instances, monitoring control plane - Rohit
 
 Completed the following tasks:
-
+- Provision virtual machines on DigitalOcean for Monitoring dashboard, Checkbox.io and iTrust
+- Configure the ```pipeline prod up``` command
+- Configure the monitoring dashboard for DigitalOcean virtual machines
 
 Remaining tasks:
-
+- Fix the latency and HTTP status issue in the monitoring dashboard
+- Merge the monitoring dashboard code with canary analysis to eliminate redundancy.
 
 #### Implement deployment to cloud instances - Zachariah
 
