@@ -1,11 +1,20 @@
 // websocket server that dashboard connects to.
+const chalk = require('chalk');
 const redis = require('redis');
 const got = require('got');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const httpProxy = require('http-proxy');
+var child  = require('child_process'); 
 
 const PROD = 'production';
 const LOCAL = 'local';
+// 5 minutes
+const SWITCH_TIME = 300000;
+// 5 seconds
+const LOAD_INTERVAL = 5000;
+const SURVEY = 'survey.json';
 
 // We need your host computer ip address in order to use port forwards to servers.
 let ip = ''
@@ -26,20 +35,23 @@ catch(e)
 // `production` uses the ip.txt file
 let args = process.argv.slice(2);
 const environment = args[0];
-var servers;
 
-if (environment == LOCAL ) {
-	const blue_ip = args[1];
-	const green_ip = args[2];
+var servers;
+var GREEN;
+var BLUE;
+
+if (environment == LOCAL) {
+	BLUE = `http://${args[1]}:3000/preview`;
+	GREEN = `http://${args[2]}:3000/preview`;
+
 	servers = 
 	[
-		
-		{name: 'blue', url: `http://${blue_ip}:3001/`, status: "#cccccc",  scoreTrend : [0]},
-		{name: 'green', url: `http://${green_ip}:3001/`, status: "#cccccc",  scoreTrend : [0]},
+	{name: "blue", url:`http://${args[1]}:3000/preview`, status: "#cccccc",  scoreTrend : [0]},
+	{name: "green", url:`http://${args[2]}:3000/preview`, status: "#cccccc",  scoreTrend : [0]}
 	];
 }
-//******Set the ips for production servers*************
-else if (environment == PROD){
+//****** Set the ips for production servers *************
+if (environment == PROD){
 	servers = 
 	[
 	{name: "alpine-01", url:`http://${ip}:9001/`, status: "#cccccc",  scoreTrend : [0]},
@@ -47,6 +59,97 @@ else if (environment == PROD){
 	];
 }
 
+class Proxy
+{
+    constructor()
+    {
+		this.TARGET = BLUE;
+		setInterval(this.sendLoad.bind(this), LOAD_INTERVAL);
+		setTimeout( this.switchover.bind(this), SWITCH_TIME );
+    }
+
+    // TASK 1: 
+    async proxy()
+    {
+        let options = {};
+        let proxy   = httpProxy.createProxyServer(options);
+        let self = this;
+        // Redirect requests to the active TARGET (BLUE or GREEN)
+        let server  = http.createServer(function(req, res)
+        {
+            // callback for redirecting requests.
+            proxy.web( req, res, {target: self.TARGET } );
+        });
+		server.listen(3080);	
+   }
+
+   switchover()
+   {
+      this.TARGET = GREEN;
+	  console.log(chalk.keyword('pink')(`Switching over to ${this.TARGET} ...`));
+	  setTimeout(function() {
+		child.execSync('forever stopall', {stdio: 'inherit'});
+	}, SWITCH_TIME); 
+   } 
+   
+   // We send Load to our target every 5 seconds
+   // We use POST method on /preview service at port 3000
+   // We will survey.json to be rendered
+   async sendLoad() {
+       
+            console.log(chalk.keyword('orange')(`******* ${this.TARGET} *******`));
+            var options = {
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: fs.readFileSync(SURVEY, 'utf8'),
+				throwHttpErrors: false,
+				timeout: 5000
+			};
+			let now = Date.now();
+			var TGT = this.TARGET;
+			try {
+            got.post(this.TARGET, options).then(function(res){
+                for (var server of servers) {
+					let captureServer = server;
+					if (captureServer.url == TGT) {						
+						captureServer.statusCode = res.statusCode;
+						captureServer.latency = res.statusCode == 200 ? Date.now() - now: 5000;
+					}
+				}
+			})
+		}
+		catch(e) {}
+	}
+}
+
+
+function sendLoad() 
+	{
+		for( var server of servers )
+		{
+			if( server.url )
+			{
+				let now = Date.now();
+
+				// Bind a new variable in order to for it to be properly captured inside closure.
+				let captureServer = server;
+
+				// Make request to server we are monitoring.
+				got(server.url, {timeout: 5000, throwHttpErrors: false}).then(function(res)
+				{
+					// TASK 2
+					captureServer.statusCode = res.statusCode
+					captureServer.latency = Date.now() - now;
+				}).catch( e => 
+				{
+					// console.log(e);
+					captureServer.statusCode = e.code;
+					captureServer.latency = 5000;
+				});
+			}
+		}
+}
 
 function start(app)
 {
@@ -90,7 +193,7 @@ function start(app)
 	// When an agent has published information to a channel, we will receive notification here.
 	client.on("message", function (channel, message) 
 	{
-		console.log(`Received message from agent: ${channel}`)
+		// console.log(`Received message from agent: ${channel}`)
 		for( var server of servers )
 		{
 			// Update our current snapshot for a server's metrics.
@@ -105,33 +208,16 @@ function start(app)
 	});
 
 	// LATENCY CHECK
-	var latency = setInterval( function () 
-	{
-		for( var server of servers )
-		{
-			if( server.url )
-			{
-				let now = Date.now();
-
-				// Bind a new variable in order to for it to be properly captured inside closure.
-				let captureServer = server;
-
-				// Make request to server we are monitoring.
-				got(server.url, {timeout: 5000, throwHttpErrors: false}).then(function(res)
-				{
-					// TASK 2
-					captureServer.statusCode = res.statusCode
-					captureServer.latency = Date.now() - now;
-				}).catch( e => 
-				{
-					// console.log(e);
-					captureServer.statusCode = e.code;
-					captureServer.latency = 5000;
-				});
-			}
-		}
-	}, 10000);
+	if (environment == PROD) {
+		var latency = setInterval(sendLoad, 10000);
+	}
+	// Use Proxy server to alternate load to BLUE and GREEN after 5 minutes
+	else {
+		let proxy = new Proxy();
+    	proxy.proxy();
+	}
 }
+
 
 // TASK 3
 function updateHealth(server)
@@ -159,8 +245,8 @@ function updateHealth(server)
 		score += 1
 	}
 	server.status = score2color(score/4);
-
-	console.log(`${server.name} ${score}`);
+	var canary = score > 2 ? 'PASS' : 'FAIL';
+	console.log(`${server.name} ${score} ${canary}`);
 
 	// Add score to trend data.
 	server.scoreTrend.push( (4-score));
