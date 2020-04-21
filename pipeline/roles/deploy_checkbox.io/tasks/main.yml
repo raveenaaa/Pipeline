@@ -1,0 +1,81 @@
+---
+- name: Create a deploy directory if it does not exist
+  become: yes
+  file:
+    path: '{{ project_path }}'
+    state: directory
+    owner: vagrant
+    group: vagrant
+
+- name: Set some variable
+  set_fact:
+    release_path: "{{ project_path }}/releases/{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+    current_path: '{{ project_path }}/current'
+    app_path: '{{ project_path }}/current/server-side/site'
+
+- name: Create new folder
+  become: yes
+  file:
+    dest: '{{ release_path }}'
+    mode: 0755
+    recurse: yes
+    state: directory
+
+- name: Clone the repository
+  become: yes
+  git:
+    repo: https://github.com/chrisparnin/checkbox.io.git
+    dest: '{{ release_path }}'
+
+- name: Update symlink
+  become: yes
+  file:
+    src: '{{ release_path }}'
+    dest: '{{ current_path }}'
+    state: link
+
+- name: Delete old pm2 process
+  become: yes
+  command: sudo pm2 kill
+  ignore_errors: yes
+
+- name: Install packages based on package.json.
+  become: yes
+  npm:
+    path: '{{ app_path }}'
+    production: yes
+
+- name: Start pm2
+  become: yes
+  command: sudo pm2 start server.js --name checkbox-app
+  args:
+    chdir: '{{ app_path }}'
+
+- name: Copy nginx default file
+  become: yes
+  copy:
+    src: '{{ current_path }}/local-config/default'
+    dest: /etc/nginx/sites-available/
+    owner: root
+    group: root
+
+- name: Copy nginx.conf file
+  become: yes
+  copy:
+    src: '{{ current_path }}/local-config/nginx.conf'
+    dest: /etc/nginx/
+    owner: root
+    group: root
+
+- name: Edit the root location
+  become: yes
+  lineinfile:
+    dest: /etc/nginx/sites-available/default
+    regexp: '^root \/.*'
+    line: 'root {{ current_path }}/public_html'
+
+- name: Restart nginx
+  become: yes
+  systemd:
+    name: nginx
+    state: restarted

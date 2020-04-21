@@ -11,7 +11,12 @@ sudo add-apt-repository ppa:ansible/ansible -y
 sudo apt-get update
 sudo apt-get install ansible -y
 # Ensure security key has proper permissions
-chmod 700 ~/.ssh/jenkins_rsa
+chmod 700 ~/.ssh/deploy_rsa
 echo "password" | tee vault_pass.txt
 
-ansible-playbook --vault-password-file vault_pass.txt /bakerx/pipeline/playbook.yml -i /bakerx/pipeline/inventory -e "git_username=$1" -e "git_password=$2"
+echo export GIT_USER=$1 >> ~/.profile
+echo export GIT_PASS=$2 >> ~/.profile
+
+source ~/.profile
+
+# ansible-playbook --vault-password-file vault_pass.txt "/bakerx/pipeline/$1-playbook.yml" -i "/bakerx/pipeline/$2" -vvvv

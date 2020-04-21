@@ -1,19 +1,13 @@
 ---
-- name: Install "pm2" node.js package.
-  become: yes
-  npm:
-    name: pm2
-    global: yes
-
 - name: Add user "jenkins" to sudo
   become: yes
   lineinfile:
     path: /etc/sudoers.d/jenkins
-    line: "jenkins ALL=(ALL) NOPASSWD: ALL"
+    line: 'jenkins ALL=(ALL) NOPASSWD: ALL'
     state: present
     mode: 0440
     create: yes
-    validate: "visudo -cf %s"
+    validate: 'visudo -cf %s'
 
 - name: Install Jenkins job builder
   become: yes
@@ -23,7 +17,7 @@
 - name: Creating directory for ini file
   become: yes
   file:
-    path: "/etc/jenkins_jobs/"
+    path: '/etc/jenkins_jobs/'
     state: directory
     mode: 0755
     owner: jenkins
@@ -31,7 +25,7 @@
 - name: Configure jenkins-job-builder
   become: yes
   copy:
-    dest: "/etc/jenkins_jobs/jenkins_jobs.ini"
+    dest: '/etc/jenkins_jobs/jenkins_jobs.ini'
     content: |
       [job_builder]
       ignore_cache=True

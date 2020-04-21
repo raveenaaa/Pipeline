@@ -3,20 +3,26 @@
 
 - name: Get the script to enable NodeSource repository
   get_url:
-    url: "https://deb.nodesource.com/setup_12.x"
-    dest: "/tmp/nodejs.sh"
+    url: 'https://deb.nodesource.com/setup_12.x'
+    dest: '/tmp/nodejs.sh'
 
 - name: Set execution permission for nodejs.sh script
   file:
-    path: "/tmp/nodejs.sh"
-    mode: "u+x"
+    path: '/tmp/nodejs.sh'
+    mode: 'u+x'
 
 - name: Execute the script
   become: yes
-  shell: "/tmp/nodejs.sh"
+  shell: '/tmp/nodejs.sh'
 
 - name: Install nodejs
   become: yes
   apt:
     state: present
     name: nodejs
+
+- name: Install "pm2" node.js package.
+  become: yes
+  npm:
+    name: pm2
+    global: yes

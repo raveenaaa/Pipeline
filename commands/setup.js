@@ -42,17 +42,21 @@ async function run(privateKey, username, password) {
   let result = child.spawnSync(
     `bakerx`,
     `run ansible-srv bionic --ip 192.168.33.10 --sync`.split(' '),
-    { shell: true, stdio: 'inherit' }
+    {
+      shell: true,
+      stdio: 'inherit',
+    }
   );
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);
   }
 
-  console.log(chalk.blueBright('Provisioning jenkins server...'));
+  // Temporarily setup a deploy server until the provisioning step is done
+  console.log(chalk.blueBright('Provisioning deploy server...'));
   result = child.spawnSync(
     `bakerx`,
-    `run jenkins-srv bionic --ip 192.168.33.20 --memory 3072`.split(' '),
+    `run deploy-srv bionic --ip 192.168.33.20 --memory 3072`.split(' '),
     { shell: true, stdio: 'inherit' }
   );
   if (result.error) {
@@ -67,7 +71,7 @@ async function run(privateKey, username, password) {
     privateKey || path.join(os.homedir(), '.bakerx', 'insecure_private_key');
   result = scpSync(
     identifyFile,
-    'vagrant@192.168.33.10:/home/vagrant/.ssh/jenkins_rsa'
+    'vagrant@192.168.33.10:/home/vagrant/.ssh/deploy_rsa'
   );
   if (result.error) {
     console.log(result.error);

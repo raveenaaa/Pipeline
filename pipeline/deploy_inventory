@@ -1,0 +1,8 @@
+[checkbox.io]
+192.168.33.20   ansible_ssh_private_key_file=~/.ssh/deploy_rsa    ansible_user=vagrant
+[checkbox.io:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+[iTrust]
+192.168.33.20   ansible_ssh_private_key_file=~/.ssh/deploy_rsa    ansible_user=vagrant
+[iTrust:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'

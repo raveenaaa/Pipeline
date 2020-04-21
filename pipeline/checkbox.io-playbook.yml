@@ -1,0 +1,14 @@
+# Main playbook that runs the 'Configure jenkins server task'
+# We need to install dependencies first
+# And set up env variables first
+- hosts: checkbox.io
+  vars:
+    project_path: /var/www/nodejs
+  vars_files:
+    - /bakerx/pipeline/vars/vars.yml
+    - /bakerx/pipeline/vars/secrets.yml
+  roles:
+    - setup_nodejs
+    - setup_mongodb
+    - setup_nginx
+    - deploy_checkbox.io
