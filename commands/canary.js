@@ -104,7 +104,7 @@ async function start_checkbox() {
 }
 
 async function run_playbook() {
-  console.log(chalk.blueBright('Running playbook to install dependencies...'));
+  console.log(chalk.keyword('orange')('Running playbook to install dependencies...'));
     const cmd = `ansible-playbook --vault-password-file vault_pass.txt /bakerx/pipeline/checkbox-playbook.yml -i /bakerx/pipeline/inventory`;
     result = await sshSync(cmd,`vagrant@${ansible_ip}`);
     if (result.error) {
@@ -116,17 +116,21 @@ async function run_playbook() {
 async function run(blue_branch, green_branch) {
     await provision_servers();
     
+    // To avoid host unreachable error
+    console.log(chalk.keyword('magenta')('Waiting for 90 seconds before running playbook...'));
+    setTimeout(async function() {
     await run_playbook()
 
-    // console.log(chalk.blueBright('Setting up blue...'));
+    console.log(chalk.blueBright('Setting up blue...'));
     await clone_repositories(blue_branch, blue_ip);
     
-    // console.log(chalk.greenBright('Setting up green...'));
+    console.log(chalk.greenBright('Setting up green...'));
     await clone_repositories(green_branch, green_ip);
 
     await start_checkbox();   
     
     await start_agents(); 
 
-    await start_dashboard();    
+    await start_dashboard(); 
+    }, 90000);    
 }
