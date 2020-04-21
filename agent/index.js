@@ -7,19 +7,48 @@ const si = require('systeminformation');
 // TASK 1:
 class Agent
 {
+    round(num) {
+        return Math.round(num * 100) / 100
+    }
+
     memoryLoad()
     {
         let totalMem = os.totalmem()
         let freeMem = os.freemem()
         // console.log( totalMem, freeMem );
         let usedMemory = (totalMem - freeMem) * 100 / totalMem
-        return usedMemory
+        return this.round(usedMemory)
     }
     async cpu()
     {
        let load = await si.currentLoad();
        // console.log(load);
-       return load.currentload;
+       return this.round(load.currentload);
+    }
+
+    async nginxMem()
+    {
+        let nginx = await si.processLoad('nginx');
+        // console.log('///455464: ', proc);
+        return this.round(nginx.mem);
+    }
+
+    async mongoMem()
+    {
+        let mongo = await si.processLoad('mongod');
+        return this.round(mongo.mem);
+    }
+
+    async nodeMem()
+    {
+        let node = await si.processLoad('node');
+        return this.round(node.mem);
+    }
+
+    async mySQLMem()
+    {
+        let mysql = await si.processLoad('mysqld');
+        return this.round(mysql.mem);
     }
 }
 
@@ -35,7 +64,7 @@ class Agent
 async function main(name, monitor_ip)
 {
     let agent = new Agent();
-    console.log('Agent name: ', name)
+    // console.log('Agent name: ', name)
     let connection = redis.createClient(6379, monitor_ip, {})
     connection.on('error', function(e)
     {
@@ -50,11 +79,15 @@ async function main(name, monitor_ip)
     {
         let payload = {
             memoryLoad: agent.memoryLoad(),
-            cpu: await agent.cpu()
+            cpu: await agent.cpu(),
+            nginx: await agent.nginxMem(),
+            mongo: await agent.mongoMem(),
+            node: await agent.nodeMem(),
+            mysql: await agent.mySQLMem()
         };
         let msg = JSON.stringify(payload);
         await client.publish(name, msg);
-        console.log(`${name} ${msg}`);
+        // console.log(`${name} ${msg}`);
     }, 1000);
 
 }

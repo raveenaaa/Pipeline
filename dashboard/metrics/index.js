@@ -10,11 +10,29 @@ var child  = require('child_process');
 
 const PROD = 'production';
 const LOCAL = 'local';
+
 // 5 minutes
 const SWITCH_TIME = 300000;
+
+// Interval for which we will perform latency checks
 // 5 seconds
 const LOAD_INTERVAL = 5000;
+// Survey used during post request to checkbox.io microservice
+// For canary analysis
 const SURVEY = 'survey.json';
+
+var servers;
+var GREEN;
+var BLUE;
+
+// Our arrays for metrics for final report generation
+var scoreArr = [];
+var cpuArr = [];
+var memArr = [];
+var mongoArr = [];
+var nodeArr = [];
+var nginxArr = [];
+var latencyArr = [];
 
 // We need your host computer ip address in order to use port forwards to servers.
 let ip = ''
@@ -28,17 +46,11 @@ catch(e)
 	throw new Error("Missing required ip.txt file");	
 }
 
-// Servers data being monitored.
-
 // Get the environment type from commandline args
 // `local` uses blue_ip, green_ip which will also be provided in the args
 // `production` uses the ip.txt file
 let args = process.argv.slice(2);
 const environment = args[0];
-
-var servers;
-var GREEN;
-var BLUE;
 
 if (environment == LOCAL) {
 	BLUE = `http://${args[1]}:3000/preview`;
@@ -59,6 +71,12 @@ if (environment == PROD){
 	];
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+// PROXY / LOAD BALANCER
+////////////////////////////////////////////////////////////////////////////////////////
+// For the First 5 minutes it routes traffic to BLUE
+// For the next 5 minutes it routes traffic to GREEN
+// Finally it terminates the servers using `forever stopall`
 class Proxy
 {
     constructor()
@@ -68,7 +86,6 @@ class Proxy
 		setTimeout( this.switchover.bind(this), SWITCH_TIME );
     }
 
-    // TASK 1: 
     async proxy()
     {
         let options = {};
@@ -86,7 +103,7 @@ class Proxy
    switchover()
    {
       this.TARGET = GREEN;
-	  console.log(chalk.keyword('pink')(`Switching over to ${this.TARGET} ...`));
+	//   console.log(chalk.keyword('pink')(`Switching over to ${this.TARGET} ...`));
 	  setTimeout(function() {
 		child.execSync('forever stopall', {stdio: 'inherit'});
 	}, SWITCH_TIME); 
@@ -97,7 +114,7 @@ class Proxy
    // We will survey.json to be rendered
    async sendLoad() {
        
-            console.log(chalk.keyword('orange')(`******* ${this.TARGET} *******`));
+            // console.log(chalk.keyword('orange')(`******* ${this.TARGET} *******`));
             var options = {
                 headers: {
                     'Content-type': 'application/json'
@@ -124,33 +141,9 @@ class Proxy
 }
 
 
-function sendLoad() 
-	{
-		for( var server of servers )
-		{
-			if( server.url )
-			{
-				let now = Date.now();
-
-				// Bind a new variable in order to for it to be properly captured inside closure.
-				let captureServer = server;
-
-				// Make request to server we are monitoring.
-				got(server.url, {timeout: 5000, throwHttpErrors: false}).then(function(res)
-				{
-					// TASK 2
-					captureServer.statusCode = res.statusCode
-					captureServer.latency = Date.now() - now;
-				}).catch( e => 
-				{
-					// console.log(e);
-					captureServer.statusCode = e.code;
-					captureServer.latency = 5000;
-				});
-			}
-		}
-}
-
+/************************************
+ * BEGIN THE MONITORING AND METRICS
+*************************************/
 function start(app)
 {
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -161,7 +154,7 @@ function start(app)
 	io.set('transports', ['websocket']);
 	// Whenever a new page/client opens a dashboard, we handle the request for the new socket.
 	io.on('connection', function (socket) {
-        console.log(`Received connection id ${socket.id} connected ${socket.connected}`);
+        // console.log(`Received connection id ${socket.id} connected ${socket.connected}`);
 
 		if( socket.connected )
 		{
@@ -202,6 +195,10 @@ function start(app)
 				let payload = JSON.parse(message);
 				server.memoryLoad = payload.memoryLoad;
 				server.cpu = payload.cpu;
+				server.nginx = payload.nginx;
+				server.mongo = payload.mongo;
+				server.node = payload.node;
+				server.mysql = payload.mysql;
 				updateHealth(server);
 			}
 		}
@@ -209,7 +206,33 @@ function start(app)
 
 	// LATENCY CHECK
 	if (environment == PROD) {
-		var latency = setInterval(sendLoad, 10000);
+		var latency = setInterval(function() {
+			{
+				for( var server of servers )
+				{
+					if( server.url )
+					{
+						let now = Date.now();
+		
+						// Bind a new variable in order to for it to be properly captured inside closure.
+						let captureServer = server;
+		
+						// Make request to server we are monitoring.
+						got(server.url, {timeout: 5000, throwHttpErrors: false}).then(function(res)
+						{
+							// TASK 2
+							captureServer.statusCode = res.statusCode
+							captureServer.latency = Date.now() - now;
+						}).catch( e => 
+						{
+							// console.log(e);
+							captureServer.statusCode = e.code;
+							captureServer.latency = 5000;
+						});
+					}
+				}
+		}
+		}, LOAD_INTERVAL);
 	}
 	// Use Proxy server to alternate load to BLUE and GREEN after 5 minutes
 	else {
@@ -218,35 +241,53 @@ function start(app)
 	}
 }
 
-
-// TASK 3
 function updateHealth(server)
 {
 	let score = 0;
 	// Update score calculation.
+	// Only if server is responsive then we update
 	if (server.statusCode == 200) {
 
 		score += 1
 
+		if (server.latency < 50) {
+
+			score += 1
+		}
+		else if (server.latency < 100) {
+
+			score += 0.75
+		}
+		else if (server.latency < 2000) {
+
+			score += 0.5
+		}
+		
+		if (server.memoryLoad < 90 ) {
+
+			score += 1
+		}
+		else if (server.memoryLoad < 100) {
+	
+			score += 0.5
+		}
+	
+		if (server.cpu < 50) {
+	
+			score += 1
+		}
+
+		else if (server.cpu < 100) {
+			score += 0.5
+		}
+
+	}
+	else {
+		
 	}
 
-	if (server.latency < 5000) {
-
-		score += 1
-	}
-
-	if (server.memoryLoad < 100) {
-
-		score += 1
-	}
-
-	if (server.cpu < 100) {
-
-		score += 1
-	}
 	server.status = score2color(score/4);
-	var canary = score > 2 ? 'PASS' : 'FAIL';
-	console.log(`${server.name} ${score} ${canary}`);
+	// console.log(`${server.name} ${score} ${canary}`);
 
 	// Add score to trend data.
 	server.scoreTrend.push( (4-score));
