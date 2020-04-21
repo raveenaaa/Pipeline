@@ -27,7 +27,14 @@ Remaining tasks:
 #### Implement canary analysis (checkbox.io preview microservice) - Raveena
 
 Completed the following tasks:
-
+- Provisioned and configured monitor, blue and green
+- Cloned the appropriate branches
+- Setup and start agent
+- Setup and run dashboard
+- Metrics: CPU, Memory, Latency, HHTPStatus
 
 Remaining tasks:
+- Finalise metrics
+- Create report
+- Setup and run loadbalancer
 
