@@ -5,6 +5,7 @@ const yaml = require('js-yaml');
 const fs = require('fs');
 
 const sshSync = require('../lib/ssh');
+const scpSync = require('../lib/scp');
 
 exports.command = 'canary <blue_branch> <green_branch>';
 exports.desc = 'Run Canary Analysis given the branches';
@@ -95,19 +96,11 @@ async function start_agents() {
 
 async function start_checkbox() {
   console.log(chalk.blueBright('Starting checkbox microservice on blue...'));
-  result = sshSync(`cd checkbox.io-micro-preview/ && forever start index.js`, `vagrant@${blue_ip}`);
+  result = sshSync(`cd checkbox.io-micro-preview/ && sudo npm install forever -g && forever stopall && forever start index.js`, `vagrant@${blue_ip}`);
 
   console.log(chalk.greenBright('Starting checkbox microservice on green...'));
-  result = sshSync(`cd checkbox.io-micro-preview/ && forever start index.js`, `vagrant@${green_ip}`);
+  result = sshSync(`cd checkbox.io-micro-preview/ && sudo npm install forever -g && forever stopall && forever start index.js`, `vagrant@${green_ip}`);
 
-}
-
-async function start_servers() {
-  console.log(chalk.blueBright(`Blue server listening at '/`));
-  result = sshSync(`cd /bakerx && npm install && sudo npm install forever -g && forever stopall && forever start server.js`, `vagrant@${blue_ip}`);
-
-  console.log(chalk.greenBright(`Green server listening at '/`));
-  result = sshSync(`cd /bakerx && npm install && sudo npm install forever -g && forever stopall && forever start server.js`, `vagrant@${green_ip}`);
 }
 
 async function run_playbook() {
@@ -122,7 +115,7 @@ async function run_playbook() {
 
 async function run(blue_branch, green_branch) {
     await provision_servers();
-
+    
     await run_playbook()
 
     // console.log(chalk.blueBright('Setting up blue...'));
@@ -131,12 +124,9 @@ async function run(blue_branch, green_branch) {
     // console.log(chalk.greenBright('Setting up green...'));
     await clone_repositories(green_branch, green_ip);
 
-    // Making our green and blue servers listen at route '/'
-    await start_servers();
-
-    await start_checkbox();    
+    await start_checkbox();   
+    
+    await start_agents(); 
 
     await start_dashboard();    
-
-    await start_agents();    
 }
