@@ -54,7 +54,7 @@
 - name: Copy nginx default file
   become: yes
   copy:
-    src: '{{ current_path }}/local-config/default'
+    src: '{{ current_path }}/local-conf/default'
     dest: /etc/nginx/sites-available/
     owner: root
     group: root
@@ -62,7 +62,7 @@
 - name: Copy nginx.conf file
   become: yes
   copy:
-    src: '{{ current_path }}/local-config/nginx.conf'
+    src: '{{ current_path }}/local-conf/nginx.conf'
     dest: /etc/nginx/
     owner: root
     group: root
