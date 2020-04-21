@@ -1,6 +1,7 @@
 # Milestone 3 Checkpoint Report
 
 ## Project Board
+![](images/M3-Checkpoint.PNG)
 
 For this checkpoint, the 3 general tasks were assigned as follows:
 
