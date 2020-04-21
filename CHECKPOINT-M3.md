@@ -15,7 +15,8 @@ Completed the following tasks:
 Remaining tasks:
 
 - Fix the latency and HTTP status issue in the monitoring dashboard
-- Merge the monitoring dashboard code with canary analysis to eliminate redundancy.
+- Merge the monitoring dashboard code with canary analysis to eliminate redundancy
+- Create an inventory file containing the IP addresses of the provisioned VMs
 
 #### Implement deployment to cloud instances - Zachariah
 
@@ -34,4 +35,14 @@ Remaining tasks:
 
 Completed the following tasks:
 
+- Provisioned and configured monitor, blue and green
+- Cloned the appropriate branches
+- Setup and start agent
+- Setup and run dashboard
+- Metrics: CPU, Memory, Latency, HHTPStatus
+
 Remaining tasks:
+
+- Finalise metrics
+- Create report
+- Setup and run loadbalancer
