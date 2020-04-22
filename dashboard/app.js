@@ -4,8 +4,18 @@ const path = require('path');
 const app = express();
 
 const metrics = require('./metrics/index');
+const proxy = require('./metrics/proxy');
 
-metrics.start(app);
+const LOCAL = 'local'
+
+const args = process.argv.slice(2);
+
+if (args[0] == LOCAL) {
+  proxy.start(app);
+}
+else {
+  metrics.start(app);
+}
 
 app.use(express.static(path.join(__dirname, 'www')));
 

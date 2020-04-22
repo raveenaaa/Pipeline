@@ -115,7 +115,7 @@ async function generateReport() {
     const blue_report = await fs.readFileSync(path.join(__dirname, '../dashboard/', 'blue.json'), 'utf8');
     const green_report = await fs.readFileSync(path.join(__dirname, '../dashboard/', 'green.json'), 'utf8');
 
-    console.log(chalk.keyword('magenta')('\n<=============== REPORT =================>'));
+    console.log(chalk.keyword('pink')('\n<=============== REPORT =================>'));
 
     console.log(chalk.blueBright('Metrics of blue server...'));
     console.log(blue_report);
