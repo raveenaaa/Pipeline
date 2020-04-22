@@ -5,13 +5,11 @@ const yaml = require('js-yaml');
 const fs = require('fs');
 
 const sshSync = require('../lib/ssh');
-const scpSync = require('../lib/scp');
 
 exports.command = 'canary <blue_branch> <green_branch>';
 exports.desc = 'Run Canary Analysis given the branches';
 
 const PASS = 'PASS';
-const FAIL = 'FAIL';
 
 try {
     const vars_file =  path.join(__dirname, "../pipeline/vars/", "vars.yml");
@@ -55,7 +53,6 @@ async function provision_servers() {
 
 async function clone_repositories(branch, ip) {
   // Clone checkbox microservice
-  console.log(chalk.keyword('orange')('Cloning the checkbox microservice...'));
   let result = await sshSync(`git clone https://github.com/chrisparnin/checkbox.io-micro-preview.git`, `vagrant@${ip}`);
   if (result.error) {
     console.log(result.error);
@@ -65,14 +62,6 @@ async function clone_repositories(branch, ip) {
   // Switch to branch
   console.log(chalk.keyword('orange')(`Switching to ${branch}...`));
   result = await sshSync(`cd checkbox.io-micro-preview && git checkout ${branch}`, `vagrant@${ip}`);
-  if (result.error) {
-    console.log(result.error);
-    process.exit(result.status);
-  }
-
-  // Install dependencies
-  console.log(chalk.keyword('orange')(`Install dependencies...`));
-  result = await sshSync(`cd checkbox.io-micro-preview && npm install`, `vagrant@${ip}`);
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);
@@ -91,21 +80,25 @@ async function start_dashboard() {
 
 async function start_agents() {
   console.log(chalk.blueBright('Starting the agent on blue...'));
-  var args = `"--node-args='blue ${monitor_ip}'"`
-  result = await sshSync(`cd /bakerx && pm2 start index.js ${args}`, `vagrant@${blue_ip}`);
+  let result = await sshSync(`cd /bakerx && pm2 start index.js -- blue ${monitor_ip}`, `vagrant@${blue_ip}`);
 
   console.log(chalk.greenBright('Starting the agent on green...'));
-  args = `"--node-args='green ${monitor_ip}'"`
-  result = await sshSync(`cd /bakerx && pm2 start index.js ${args}`, `vagrant@${green_ip}`);
+  result = await sshSync(`cd /bakerx && pm2 start index.js -- green ${monitor_ip}`, `vagrant@${green_ip}`);
 }
 
 async function start_checkbox() {
+    // Install dependencies
+  console.log(chalk.blueBright(`Installing dependencies...`));
+  let result = await sshSync(`cd checkbox.io-micro-preview/ && npm install`, `vagrant@${blue_ip}`);
+    
   console.log(chalk.blueBright('Starting checkbox microservice on blue...'));
-  result = await sshSync(`cd checkbox.io-micro-preview/ && pm2 stop all && pm2 start index.js`, `vagrant@${blue_ip}`);
+  result = await sshSync(`cd checkbox.io-micro-preview/ && pm2 kill && pm2 start index.js`, `vagrant@${blue_ip}`);
+
+  console.log(chalk.greenBright(`Installing dependencies...`));
+  result = await sshSync(`cd checkbox.io-micro-preview && npm install`, `vagrant@${green_ip}`);
 
   console.log(chalk.greenBright('Starting checkbox microservice on green...'));
-  result = await sshSync(`cd checkbox.io-micro-preview/ && pm2 stop all && pm2 start index.js`, `vagrant@${green_ip}`);
-
+  result = await sshSync(`cd checkbox.io-micro-preview/ && pm2 kill && pm2 start index.js`, `vagrant@${green_ip}`);
 }
 
 async function run_playbook() {
@@ -152,14 +145,13 @@ async function shutDown() {
 
 async function run(blue_branch, green_branch) {
     await provision_servers();
-    
-    await run_playbook()
 
-    console.log(chalk.blueBright('Setting up blue...'));
+    console.log(chalk.keyword('orange')('Cloning repositories...'));
     await clone_repositories(blue_branch, blue_ip);
     
-    console.log(chalk.greenBright('Setting up green...'));
     await clone_repositories(green_branch, green_ip);
+    
+    await run_playbook();
 
     await start_checkbox();   
     
