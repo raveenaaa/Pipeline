@@ -91,18 +91,20 @@ async function start_dashboard() {
 
 async function start_agents() {
   console.log(chalk.blueBright('Starting the agent on blue...'));
-  result = sshSync(`cd /bakerx && forever start index.js blue ${monitor_ip}`, `vagrant@${blue_ip}`);
+  var args = `"--node-args='blue ${monitor_ip}'"`
+  result = await sshSync(`cd /bakerx && pm2 start index.js ${args}`, `vagrant@${blue_ip}`);
 
   console.log(chalk.greenBright('Starting the agent on green...'));
-  result = sshSync(`cd /bakerx && forever start index.js green ${monitor_ip}`, `vagrant@${green_ip}`);
+  args = `"--node-args='green ${monitor_ip}'"`
+  result = await sshSync(`cd /bakerx && pm2 start index.js ${args}`, `vagrant@${green_ip}`);
 }
 
 async function start_checkbox() {
   console.log(chalk.blueBright('Starting checkbox microservice on blue...'));
-  result = sshSync(`cd checkbox.io-micro-preview/ && sudo npm install forever -g && forever stopall && forever start index.js`, `vagrant@${blue_ip}`);
+  result = await sshSync(`cd checkbox.io-micro-preview/ && pm2 stop all && pm2 start index.js`, `vagrant@${blue_ip}`);
 
   console.log(chalk.greenBright('Starting checkbox microservice on green...'));
-  result = sshSync(`cd checkbox.io-micro-preview/ && sudo npm install forever -g && forever stopall && forever start index.js`, `vagrant@${green_ip}`);
+  result = await sshSync(`cd checkbox.io-micro-preview/ && pm2 stop all && pm2 start index.js`, `vagrant@${green_ip}`);
 
 }
 
@@ -140,15 +142,15 @@ async function generateReport() {
 }
 
 async function run(blue_branch, green_branch) {
-    await provision_servers();
+    // await provision_servers();
     
-    await run_playbook()
+    // await run_playbook()
 
-    console.log(chalk.blueBright('Setting up blue...'));
-    await clone_repositories(blue_branch, blue_ip);
+    // console.log(chalk.blueBright('Setting up blue...'));
+    // await clone_repositories(blue_branch, blue_ip);
     
-    console.log(chalk.greenBright('Setting up green...'));
-    await clone_repositories(green_branch, green_ip);
+    // console.log(chalk.greenBright('Setting up green...'));
+    // await clone_repositories(green_branch, green_ip);
 
     await start_checkbox();   
     
