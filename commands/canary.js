@@ -10,6 +10,9 @@ const scpSync = require('../lib/scp');
 exports.command = 'canary <blue_branch> <green_branch>';
 exports.desc = 'Run Canary Analysis given the branches';
 
+const PASS = 'PASS';
+const FAIL = 'FAIL';
+
 try {
     const vars_file =  path.join(__dirname, "../pipeline/vars/", "vars.yml");
   
@@ -40,12 +43,12 @@ async function provision_servers() {
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
     console.log(chalk.blueBright('Provisioning blue server...'));
-    result = child.spawnSync(`bakerx`, `run blue queues --ip ${blue_ip} --sync`.split(' '), 
+    result = child.spawnSync(`bakerx`, `run blue bionic --ip ${blue_ip} --sync`.split(' '), 
                             {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../agent")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
     
     console.log(chalk.greenBright('Provisioning green server...'));
-    result = child.spawnSync(`bakerx`, `run green queues --ip ${green_ip} --sync`.split(' '), 
+    result = child.spawnSync(`bakerx`, `run green bionic --ip ${green_ip} --sync`.split(' '), 
                             {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../agent")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
 }
@@ -113,12 +116,32 @@ async function run_playbook() {
     }
 }
 
+async function generateReport() {
+    const blue_report = await fs.readFileSync(path.join(__dirname, '../dashboard/', 'blue.json'), 'utf8');
+    const green_report = await fs.readFileSync(path.join(__dirname, '../dashboard/', 'green.json'), 'utf8');
+
+    console.log(chalk.keyword('magenta')('\n<=============== REPORT =================>'));
+
+    console.log(chalk.blueBright('Metrics of blue server...'));
+    console.log(blue_report);
+
+    console.log(chalk.greenBright('\nMetrics of green server...'));
+    console.log(green_report);
+
+    const blue_result = JSON.parse(blue_report).result;
+    const green_result = JSON.parse(green_report).result;
+
+    if (blue_result == PASS && green_result == PASS) {
+      console.log(chalk.green('PASS'))
+    }
+    else {
+      console.log(chalk.red('FAIL'))
+    }
+}
+
 async function run(blue_branch, green_branch) {
     await provision_servers();
     
-    // To avoid host unreachable error
-    console.log(chalk.keyword('magenta')('Waiting for 90 seconds before running playbook...'));
-    setTimeout(async function() {
     await run_playbook()
 
     console.log(chalk.blueBright('Setting up blue...'));
@@ -132,5 +155,10 @@ async function run(blue_branch, green_branch) {
     await start_agents(); 
 
     await start_dashboard(); 
-    }, 90000);    
+
+    // Wait for completion of canary analysis and then generate report
+    console.log(chalk.keyword('orange')('Waiting to generate report...'));
+    setTimeout(function() {
+      generateReport();
+    }, 660000);  
 }

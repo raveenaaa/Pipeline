@@ -7,12 +7,11 @@ const path = require('path');
 const http = require('http');
 const httpProxy = require('http-proxy');
 var child  = require('child_process'); 
-
 const PROD = 'production';
 const LOCAL = 'local';
 
 // 5 minutes
-const SWITCH_TIME = 300000;
+const SWITCH_TIME = 20000;
 
 // Interval for which we will perform latency checks
 // 5 seconds
@@ -26,13 +25,15 @@ var GREEN;
 var BLUE;
 
 // Our arrays for metrics for final report generation
-var scoreArr = [];
+var canaryScore = [];
 var cpuArr = [];
 var memArr = [];
 var mongoArr = [];
 var nodeArr = [];
 var nginxArr = [];
 var latencyArr = [];
+var mysqlArr = [];
+var srvName;
 
 // We need your host computer ip address in order to use port forwards to servers.
 let ip = ''
@@ -71,6 +72,49 @@ if (environment == PROD){
 	];
 }
 
+async function generateReport() 
+{
+	var data = {
+		name : srvName,
+		latency: round(await getAverage(latencyArr)),
+		memory: round(await getAverage(memArr)),
+		cpu: round(await getAverage(cpuArr)),
+		nginx: round(await getAverage(nginxArr)),
+		node: round(await getAverage(nodeArr)),
+		mongo: round(await getAverage(mongoArr)),
+		mysql: round(await getAverage(mysqlArr)),
+		canaryScore: round(await getAverage(canaryScore)),
+		result: await getAverage(canaryScore) < 0.5 ? 'FAIL' : 'PASS',
+	};
+
+	// console.log(data);
+	 
+	await fs.writeFileSync(`${data.name}.json`, JSON.stringify(data), 'utf8');
+
+	memArr = [];
+	canaryScore = [];
+	cpuArr = [];
+	memArr = [];
+	mongoArr = [];
+	nodeArr = [];
+	nginxArr = [];
+	latencyArr = [];
+	mysqlArr = [];
+}
+
+function getAverage(arr) {
+	var total = 0
+	for (var element of arr) {
+		total += element
+	}
+
+	return total / arr.length
+}
+
+function round(num) {
+	return Math.round(num * 100) / 100
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 // PROXY / LOAD BALANCER
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -100,11 +144,13 @@ class Proxy
 		server.listen(3080);	
    }
 
-   switchover()
+   async switchover()
    {
+	  await generateReport();
       this.TARGET = GREEN;
 	//   console.log(chalk.keyword('pink')(`Switching over to ${this.TARGET} ...`));
-	  setTimeout(function() {
+	  setTimeout(async function() {
+		await generateReport();
 		child.execSync('forever stopall', {stdio: 'inherit'});
 	}, SWITCH_TIME); 
    } 
@@ -132,6 +178,7 @@ class Proxy
 					if (captureServer.url == TGT) {						
 						captureServer.statusCode = res.statusCode;
 						captureServer.latency = res.statusCode == 200 ? Date.now() - now: 5000;
+						updateHealth(captureServer);
 					}
 				}
 			})
@@ -199,7 +246,7 @@ function start(app)
 				server.mongo = payload.mongo;
 				server.node = payload.node;
 				server.mysql = payload.mysql;
-				updateHealth(server);
+				// updateHealth(server);
 			}
 		}
 	});
@@ -220,14 +267,14 @@ function start(app)
 						// Make request to server we are monitoring.
 						got(server.url, {timeout: 5000, throwHttpErrors: false}).then(function(res)
 						{
-							// TASK 2
 							captureServer.statusCode = res.statusCode
 							captureServer.latency = Date.now() - now;
+							updateHealth(captureServer);
 						}).catch( e => 
 						{
-							// console.log(e);
 							captureServer.statusCode = e.code;
 							captureServer.latency = 5000;
+							updateHealth(captureServer);
 						});
 					}
 				}
@@ -241,7 +288,19 @@ function start(app)
 	}
 }
 
-function updateHealth(server)
+function recordMetrics(server, score) {
+	canaryScore.push(score);
+	latencyArr.push(server.latency);
+	memArr.push(server.memoryLoad);
+	cpuArr.push(server.cpu);
+	nodeArr.push(server.node);
+	nginxArr.push(server.nginx);
+	mongoArr.push(server.mongo);
+	mysqlArr.push(server.mysql);
+	srvName = server.name;
+}
+
+async function updateHealth(server)
 {
 	let score = 0;
 	// Update score calculation.
@@ -280,11 +339,9 @@ function updateHealth(server)
 		else if (server.cpu < 100) {
 			score += 0.5
 		}
+	}
 
-	}
-	else {
-		
-	}
+	recordMetrics(server, score/4);
 
 	server.status = score2color(score/4);
 	// console.log(`${server.name} ${score} ${canary}`);
