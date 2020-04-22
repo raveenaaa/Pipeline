@@ -141,16 +141,25 @@ async function generateReport() {
     }
 }
 
-async function run(blue_branch, green_branch) {
-    // await provision_servers();
-    
-    // await run_playbook()
+async function shutDown() {
+    console.log(chalk.keyword('orange')('Shutting down canaries'));
+    let result = await child.spawnSync(`bakerx`, `delete vm blue`.split(' '), {shell:true, stdio: 'inherit'} );
+    if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
-    // console.log(chalk.blueBright('Setting up blue...'));
-    // await clone_repositories(blue_branch, blue_ip);
+    result = await child.spawnSync(`bakerx`, `delete vm green`.split(' '), {shell:true, stdio: 'inherit'} );
+    if( result.error ) { console.log(result.error); process.exit( result.status ); }
+}
+
+async function run(blue_branch, green_branch) {
+    await provision_servers();
     
-    // console.log(chalk.greenBright('Setting up green...'));
-    // await clone_repositories(green_branch, green_ip);
+    await run_playbook()
+
+    console.log(chalk.blueBright('Setting up blue...'));
+    await clone_repositories(blue_branch, blue_ip);
+    
+    console.log(chalk.greenBright('Setting up green...'));
+    await clone_repositories(green_branch, green_ip);
 
     await start_checkbox();   
     
@@ -160,7 +169,10 @@ async function run(blue_branch, green_branch) {
 
     // Wait for completion of canary analysis and then generate report
     console.log(chalk.keyword('orange')('Waiting to generate report...'));
-    setTimeout(function() {
-      generateReport();
-    }, 660000);  
+    setTimeout(async function() {
+      await generateReport();
+
+      shutDown();
+      
+    }, 600);  
 }
