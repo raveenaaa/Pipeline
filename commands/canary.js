@@ -174,5 +174,5 @@ async function run(blue_branch, green_branch) {
 
       shutDown();
       
-    }, 600);  
+    }, 660000);  
 }
