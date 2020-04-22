@@ -88,7 +88,7 @@ async function main(name, monitor_ip)
         let msg = JSON.stringify(payload);
         await client.publish(name, msg);
         // console.log(`${name} ${msg}`);
-    }, 5000);
+    }, 1000);
 
 }
 

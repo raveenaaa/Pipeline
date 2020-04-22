@@ -11,7 +11,7 @@ const PROD = 'production';
 const LOCAL = 'local';
 
 // 5 minutes
-const SWITCH_TIME = 20000;
+const SWITCH_TIME = 300000;
 
 // Interval for which we will perform latency checks
 // 5 seconds
