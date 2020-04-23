@@ -47,10 +47,13 @@
               <tr>
                   <th>Name</th>
                   <th>CPU %</th>
-                  <th>Memory %</th>
+                  <th>Mem %</th>
+                  <th>Nginx Mem %</th>
+                  <th>Mongo Mem %</th>
+                  <th>Node Mem %</th>
+                  <th>MySQL Mem %</th>
                   <th>Latency (ms)</th>
                   <th>HTTP</th>
-                  <th>CPU Load System %</th>
                   <th>Trend</th>
               </tr>
           </thead>
@@ -59,9 +62,12 @@
                 <td>{{client.name}}</td>
                 <td>{{client.cpu}}</td>
                 <td>{{client.memoryLoad}}</td>
+                <td>{{client.nginx}}</td>
+                <td>{{client.mongo}}</td>
+                <td>{{client.node}}</td>
+                <td>{{client.mysql}}</td>
                 <td>{{client.latency}}</td>
                 <td>{{client.statusCode}}</td>
-                <td>{{client.systemLoad}}</td>
                 <td>
                   <div>
                     <trend
