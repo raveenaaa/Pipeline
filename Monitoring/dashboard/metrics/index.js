@@ -8,20 +8,19 @@ const path = require('path');
 let ip = ''
 try
 {
-	ip = fs.readFileSync(path.join(__dirname,'ip.txt')).toString();
+	ip = JSON.parse(fs.readFileSync(path.join(__dirname,'server_ip.json')));
 }
 catch(e)
 {
 	console.log(e);
-	throw new Error("Missing required ip.txt file");	
+	throw new Error("Missing required server_ip.json file");	
 }
 
 /// Servers data being monitored.
 var servers = 
 [
-	{name: "Monitor", status: "#cccccc", scoreTrend : []},
-	{name: "Checkbox",url:`http://${ip}:9001/`, status: "#cccccc",  scoreTrend : [0]},
-	{name: "iTrust",url:`http://${ip}:9002/`, status: "#cccccc",  scoreTrend : [0]}
+	{name: "checkbox",url:`http://${ip['checkbox'][1]}:9001/`, status: "#cccccc",  scoreTrend : [0]},
+	{name: "itrust",url:`http://${ip['itrust'][1]}:9001/`, status: "#cccccc",  scoreTrend : [0]}
 ];
 
 
