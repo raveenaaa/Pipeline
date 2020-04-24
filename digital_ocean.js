@@ -162,11 +162,11 @@ class DigitalOceanProvider
 		if( response.body.droplet.networks.v4[0] )
 		{
 			let droplet = response.body.droplet;
-			//console.log(droplet.networks.v4[0], droplet.networks.v4[1]);
+			// console.log(droplet.networks.v4, droplet.networks.v4[1]);
 
 			// Print out IP address
 			//console.log('IP Address : ' + droplet.networks.v4[0].ip_address);
-			return droplet.networks.v4[1].ip_address;
+			return droplet.networks.v4;
 		}
 
 	}
@@ -228,7 +228,7 @@ async function provision()
 	// #4 Create an droplet with the specified name, region, and image
 	// Comment out when completed. ONLY RUN ONCE!!!!!
 
-	servers = ['Monitor', 'Checkbox', 'iTrust'];
+	servers = ['monitor', 'checkbox', 'itrust'];
 	var region = "nyc1";
 	var image = "ubuntu-18-04-x64";
 	server_ip = {};
@@ -242,8 +242,8 @@ async function provision()
 			var ip = await client.dropletInfo(dropletId);
 			if(ip)
 			{
-				console.log('IP Address : ' + ip);
-				server_ip[name] = ip;
+				console.log('IP Address : ' + ip[1].ip_address);
+				server_ip[name] = [ ip[1].ip_address, ip[0].ip_address ];
 				break
 			}
 			await sleep(5000);

@@ -34,7 +34,7 @@ async function run() {
     await sleep(30000);
 
     for(server in servers){
-        var ip = servers[server];
+        var ip = servers[server][0];
         console.log(chalk.blueBright('Install nodejs on ' + server));
         result = sshSync(
             `sudo apt update && sudo apt -y install curl dirmngr apt-transport-https lsb-release ca-certificates && curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -  && sudo apt -y install nodejs`,
@@ -63,7 +63,7 @@ async function run() {
         path.join(__dirname, '../', 'Monitoring');
       result = scpSync(
         identifyFile,
-        `root@${servers['Monitor']}:/root/`
+        `root@${servers['monitor'][0]}:/root/`
       );
       if (result.error) {
         console.log(result.error);
@@ -73,7 +73,7 @@ async function run() {
     console.log(chalk.blueBright('Install redis'));
     result = sshSync(
         `sudo apt install -y redis-server`,
-        `root@${servers['Monitor']}`
+        `root@${servers['monitor'][0]}`
     );
     if (result.error) {
         console.log(result.error);
@@ -83,27 +83,27 @@ async function run() {
     console.log(chalk.blueBright('npm install'));
     result = sshSync(
         `cd Monitoring/servers && npm install`,
-        `root@${servers['Monitor']}`
+        `root@${servers['monitor'][0]}`
     );
     if (result.error) {
         console.log(result.error);
         process.exit(result.status);
     }
 
-    console.log(chalk.blueBright('index up'));
-    result = sshSync(
-        `cd Monitoring/servers && node index up`,
-        `root@${servers['Monitor']}`
-    );
-    if (result.error) {
-        console.log(result.error);
-        process.exit(result.status);
-    }
+    // console.log(chalk.blueBright('index up'));
+    // result = sshSync(
+    //     `cd Monitoring/servers && node index up`,
+    //     `root@${servers['monitor'][0]}`
+    // );
+    // if (result.error) {
+    //     console.log(result.error);
+    //     process.exit(result.status);
+    // }
 
     console.log(chalk.blueBright('npm install'));
     result = sshSync(
         `cd Monitoring/dashboard && npm install`,
-        `root@${servers['Monitor']}`
+        `root@${servers['monitor'][0]}`
     );
     if (result.error) {
         console.log(result.error);
@@ -113,7 +113,7 @@ async function run() {
     console.log(chalk.blueBright('Changing redis config'));
     result = sshSync(
         `sed -i 's/bind 127.0.0.1 ::1/bind 0.0.0.0 ::1/g' /etc/redis/redis.conf`,
-        `root@${servers['Monitor']}`
+        `root@${servers['monitor'][0]}`
     );
     if (result.error) {
         console.log(result.error);
@@ -123,7 +123,7 @@ async function run() {
     console.log(chalk.blueBright('Restart redis server'));
     result = sshSync(
         `sudo systemctl restart redis-server`,
-        `root@${servers['Monitor']}`
+        `root@${servers['monitor'][0]}`
     );
     if (result.error) {
         console.log(result.error);
@@ -137,7 +137,7 @@ async function run() {
         path.join(__dirname, '../Monitoring/agent/', 'index.js');
       result = scpSync(
         identifyFile,
-        `root@${servers['Checkbox']}:/root/`
+        `root@${servers['checkbox'][0]}:/root/`
       );
       if (result.error) {
         console.log(result.error);
@@ -151,53 +151,87 @@ async function run() {
         path.join(__dirname, '../Monitoring/agent/', 'package.json');
       result = scpSync(
         identifyFile,
-        `root@${servers['Checkbox']}:/root/`
+        `root@${servers['checkbox'][0]}:/root/`
       );
       if (result.error) {
         console.log(result.error);
         process.exit(result.status);
       }
 
-      console.log(
-        chalk.blueBright('Copying the ip file to host')
-      );
-      var identifyFile =
-        path.join(__dirname, '../Monitoring/agent/');
-      result = scpSync(
-        `root@${servers['Monitor']}:/root/Monitoring/dashboard/metrics/ip.txt`,
-        identifyFile
-      );
-      if (result.error) {
-        console.log(result.error);
-        process.exit(result.status);
-      }
+      // console.log(
+      //   chalk.blueBright('Copying the ip file to host')
+      // );
+      // var identifyFile =
+      //   path.join(__dirname, '../Monitoring/agent/');
+      // result = scpSync(
+      //   `root@${servers['monitor'][0]}:/root/Monitoring/dashboard/metrics/ip.txt`,
+      //   identifyFile
+      // );
+      // if (result.error) {
+      //   console.log(result.error);
+      //   process.exit(result.status);
+      // }
 
       console.log(
-        chalk.blueBright('Copying the ip file to checkbox agent')
+        chalk.blueBright('Copying the ip file to monitor vm')
       );
       var identifyFile =
-        path.join(__dirname, '../Monitoring/agent/', 'ip.txt');
-      result = scpSync(
-        identifyFile,
-        `root@${servers['Checkbox']}:/root/`
-      );
-      if (result.error) {
-        console.log(result.error);
-        process.exit(result.status);
-      }
-
-      console.log(
-        chalk.blueBright('Copying the ip file to iTrust agent')
-      );
-      var identifyFile =
-        path.join(__dirname, '../Monitoring/agent/', 'ip.txt');
+        path.join(__dirname, '../', 'server_ip.json');
       result = scpSync(
         identifyFile,
-        `root@${servers['iTrust']}:/root/`
+        `root@${servers['monitor'][0]}:/root/Monitoring/dashboard/metrics/`
       );
       if (result.error) {
         console.log(result.error);
         process.exit(result.status);
+      }
+
+      // console.log(
+      //   chalk.blueBright('Copying the ip file to checkbox agent')
+      // );
+      // var identifyFile =
+      //   path.join(__dirname, '../Monitoring/agent/', 'ip.txt');
+      // result = scpSync(
+      //   identifyFile,
+      //   `root@${servers['checkbox'][0]}:/root/`
+      // );
+      // if (result.error) {
+      //   console.log(result.error);
+      //   process.exit(result.status);
+      // }
+
+      // console.log(
+      //   chalk.blueBright('Copying the ip file to iTrust agent')
+      // );
+      // var identifyFile =
+      //   path.join(__dirname, '../Monitoring/agent/', 'ip.txt');
+      // result = scpSync(
+      //   identifyFile,
+      //   `root@${servers['itrust'][0]}:/root/`
+      // );
+      // if (result.error) {
+      //   console.log(result.error);
+      //   process.exit(result.status);
+      // }
+
+      console.log(chalk.blueBright('Create ip file on Checkbox agent'));
+      result = sshSync(
+          `echo ${servers['monitor'][1]} >> ip.txt`,
+          `root@${servers['checkbox'][0]}`
+      );
+      if (result.error) {
+          console.log(result.error);
+          process.exit(result.status);
+      }
+
+      console.log(chalk.blueBright('Create ip file on iTrust agent'));
+      result = sshSync(
+          `echo ${servers['monitor'][1]} >> ip.txt`,
+          `root@${servers['itrust'][0]}`
+      );
+      if (result.error) {
+          console.log(result.error);
+          process.exit(result.status);
       }
 
       console.log(
@@ -207,7 +241,7 @@ async function run() {
         path.join(__dirname, '../Monitoring/agent/', 'index.js');
       result = scpSync(
         identifyFile,
-        `root@${servers['iTrust']}:/root/`
+        `root@${servers['itrust'][0]}:/root/`
       );
       if (result.error) {
         console.log(result.error);
@@ -221,7 +255,7 @@ async function run() {
         path.join(__dirname, '../Monitoring/agent/', 'package.json');
       result = scpSync(
         identifyFile,
-        `root@${servers['iTrust']}:/root/`
+        `root@${servers['itrust'][0]}:/root/`
       );
       if (result.error) {
         console.log(result.error);
@@ -231,7 +265,7 @@ async function run() {
       console.log(chalk.blueBright('npm install'));
       result = sshSync(
           `npm install`,
-          `root@${servers['Checkbox']}`
+          `root@${servers['checkbox'][0]}`
       );
       if (result.error) {
           console.log(result.error);
@@ -241,7 +275,7 @@ async function run() {
       console.log(chalk.blueBright('npm install'));
       result = sshSync(
           `npm install`,
-          `root@${servers['iTrust']}`
+          `root@${servers['itrust'][0]}`
       );
       if (result.error) {
           console.log(result.error);
@@ -251,7 +285,7 @@ async function run() {
       console.log(chalk.blueBright('forever start bin/www'));
       result = sshSync(
           `cd Monitoring/dashboard/ && forever start bin/www`,
-          `root@${servers['Monitor']}`
+          `root@${servers['monitor'][0]}`
       );
       if (result.error) {
           console.log(result.error);
@@ -260,8 +294,8 @@ async function run() {
 
       console.log(chalk.blueBright('forever start checkbox agent'));
       result = sshSync(
-          `forever start index.js Checkbox`,
-          `root@${servers['Checkbox']}`
+          `forever start index.js checkbox`,
+          `root@${servers['checkbox'][0]}`
       );
       if (result.error) {
           console.log(result.error);
@@ -270,8 +304,8 @@ async function run() {
 
       console.log(chalk.blueBright('forever start iTrust agent'));
       result = sshSync(
-          `forever start index.js iTrust`,
-          `root@${servers['iTrust']}`
+          `forever start index.js itrust`,
+          `root@${servers['itrust'][0]}`
       );
       if (result.error) {
           console.log(result.error);
