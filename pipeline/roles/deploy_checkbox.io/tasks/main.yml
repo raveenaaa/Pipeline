@@ -35,8 +35,7 @@
     state: link
 
 - name: Delete old pm2 process
-  become: yes
-  command: sudo pm2 kill
+  command: pm2 kill
   ignore_errors: yes
 
 - name: Install packages based on package.json.
@@ -46,8 +45,13 @@
     production: yes
 
 - name: Start pm2
-  become: yes
-  command: sudo pm2 start server.js --name checkbox-app
+  command: pm2 start server.js --name checkbox-app
+  args:
+    chdir: '{{ app_path }}'
+
+- name: Save service settings
+  command: pm2 save
+  become: true
   args:
     chdir: '{{ app_path }}'
 
@@ -55,6 +59,7 @@
   become: yes
   copy:
     src: '{{ current_path }}/local-conf/default'
+    remote_src: yes
     dest: /etc/nginx/sites-available/
     owner: root
     group: root
@@ -63,6 +68,7 @@
   become: yes
   copy:
     src: '{{ current_path }}/local-conf/nginx.conf'
+    remote_src: yes
     dest: /etc/nginx/
     owner: root
     group: root
@@ -71,8 +77,8 @@
   become: yes
   lineinfile:
     dest: /etc/nginx/sites-available/default
-    regexp: '^root \/.*'
-    line: 'root {{ current_path }}/public_html'
+    regexp: 'root \/.*'
+    line: '  root {{ current_path }}/public_html;'
 
 - name: Restart nginx
   become: yes
