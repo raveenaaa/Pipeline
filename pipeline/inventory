@@ -12,3 +12,9 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 192.168.50.30   ansible_ssh_private_key_file=~/.ssh/jenkins_rsa    ansible_user=vagrant
 [green:vars]
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+[checkbox]
+192.168.33.20   ansible_ssh_private_key_file=~/.ssh/deploy_rsa    ansible_user=vagrant
+
+[itrust]
+192.168.33.20   ansible_ssh_private_key_file=~/.ssh/deploy_rsa    ansible_user=vagrant
