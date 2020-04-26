@@ -19,14 +19,13 @@ const LOAD_INTERVAL = 5000;
 const SURVEY = 'survey.json';
 
 // Our arrays for metrics for final report generation
-var canaryScore = [];
 var cpuArr = [];
 var memArr = [];
 var mongoArr = [];
 var nodeArr = [];
 var nginxArr = [];
 var latencyArr = [];
-var mysqlArr = [];
+var responsive;
 var srvName;
 
 // Get the environment type from commandline args
@@ -43,46 +42,29 @@ var	servers =
 	{name: "green", url:`http://${args[2]}:3000/preview`, status: "#cccccc",  scoreTrend : [0]}
 	];
 
-async function generateReport() 
+async function saveMetrics() 
 {
 	const data = {
 		name : srvName,
-		latency: round(await getAverage(latencyArr)),
-		memory: round(await getAverage(memArr)),
-		cpu: round(await getAverage(cpuArr)),
-		nginx: round(await getAverage(nginxArr)),
-		node: round(await getAverage(nodeArr)),
-		mongo: round(await getAverage(mongoArr)),
-		mysql: round(await getAverage(mysqlArr)),
-		canaryScore: round(await getAverage(canaryScore)),
-		result: await getAverage(canaryScore) < 0.5 ? 'FAIL' : 'PASS',
+		latency: latencyArr,
+		memory: memArr,
+		cpu: cpuArr,
+		nginx: nginxArr,
+		node: nodeArr,
+		mongo: mongoArr,
+		responsive: responsive
 	};
 	 
 	await fs.writeFileSync(`${data.name}.json`, JSON.stringify(data), 'utf8');
 
 	srvName = '';
 	memArr = [];
-	canaryScore = [];
 	cpuArr = [];
-	memArr = [];
-	mongoArr = [];
-	nodeArr = [];
-	nginxArr = [];
 	latencyArr = [];
-	mysqlArr = [];
-}
-
-function getAverage(arr) {
-	var total = 0
-	for (var element of arr) {
-		total += element
-	}
-
-	return total / arr.length
-}
-
-function round(num) {
-	return Math.round(num * 100) / 100
+	responsive = ``;
+	nodeArr = [],
+	nginxArr = [],
+	mongoArr = []
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -116,11 +98,11 @@ class Proxy
 
    async switchover()
    {
-	  await generateReport();
+	  await saveMetrics();
       this.TARGET = GREEN;
 	  console.log(chalk.keyword('pink')(`Switching over to ${this.TARGET} ...`));
 	  setTimeout(async function() {
-		await generateReport();
+		await saveMetrics();
 		child.execSync('forever stopall', {stdio: 'inherit'});
 	}, SWITCH_TIME); 
    } 
@@ -130,7 +112,7 @@ class Proxy
    // We will survey.json to be rendered
    async sendLoad() {
        
-            console.log(chalk.keyword('orange')(`******* ${this.TARGET} *******`));
+            // console.log(chalk.keyword('orange')(`******* ${this.TARGET} *******`));
             var options = {
                 headers: {
                     'Content-type': 'application/json'
@@ -224,15 +206,19 @@ function start(app)
 	proxy.proxy();
 }
 
-function recordMetrics(server, score) {
-	canaryScore.push(score);
+function recordMetrics(server) {
 	latencyArr.push(server.latency);
 	memArr.push(server.memoryLoad);
 	cpuArr.push(server.cpu);
 	nodeArr.push(server.node);
 	nginxArr.push(server.nginx);
 	mongoArr.push(server.mongo);
-	mysqlArr.push(server.mysql);
+	if (server.statusCode == 200) {
+		responsive = true
+	}
+	else {
+		responsive = false
+	}
 	srvName = server.name;
 }
 
@@ -277,7 +263,7 @@ async function updateHealth(server)
 		}
 	}
 
-	recordMetrics(server, score/4);
+	recordMetrics(server);
 
 	server.status = score2color(score/4);
 	// console.log(`${server.name} ${score} ${canary}`);
