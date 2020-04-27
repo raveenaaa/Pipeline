@@ -6,6 +6,7 @@ const fs = require('fs');
 var mwu = require('mann-whitney-utest');
 
 const sshSync = require('../lib/ssh');
+const scpSync = require('../lib/scp');
 
 exports.command = 'canary <blue_branch> <green_branch>';
 exports.desc = 'Run Canary Analysis given the branches';
@@ -15,7 +16,6 @@ const FAIL = 'FAIL';
 const BLUE = path.join(__dirname, '../dashboard/', 'blue.json');
 const GREEN = path.join(__dirname, '../dashboard/', 'green.json')
 const REPORT = path.join(__dirname, '../canaryReport');
-console.log(REPORT)
 
 try {
     const vars_file =  path.join(__dirname, "../pipeline/vars/", "vars.yml");
@@ -23,7 +23,7 @@ try {
     let fileContents = fs.readFileSync(vars_file);
     let data = yaml.safeLoad(fileContents);
   
-    monitor_ip = data.monitor_ip;
+    proxy_ip = data.proxy_ip;
     green_ip =  data.green_ip;
     blue_ip = data.blue_ip;
     ansible_ip = data.ansible_ip;
@@ -42,7 +42,7 @@ exports.handler = async (argv) => {
 
 async function provision_servers() {
     console.log(chalk.keyword('orange')('Provisioning Proxy server...'));
-    let result = child.spawnSync(`bakerx`, `run proxy queues --ip ${monitor_ip} --sync`.split(' '), 
+    let result = child.spawnSync(`bakerx`, `run proxy bionic --ip ${proxy_ip} --sync`.split(' '), 
                                 {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../dashboard")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
@@ -55,6 +55,15 @@ async function provision_servers() {
     result = child.spawnSync(`bakerx`, `run green bionic --ip ${green_ip} --sync`.split(' '), 
                             {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../agent")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
+}
+
+async function configure_redis() {
+  console.log(chalk.keyword('orange')('Installing and configuring redis-server on Proxy...'));
+  let srcFile = path.join(__dirname, '../pipeline/redis.sh');
+  result = await scpSync(srcFile, `vagrant@${proxy_ip}:/home/vagrant/redis.sh`);
+      if( result.error ) { console.log(result.error); process.exit( result.status ); }
+
+  result = await sshSync('chmod 700 redis.sh && ./redis.sh', `vagrant@${proxy_ip}`);
 }
 
 async function clone_repositories(branch, ip) {
@@ -75,32 +84,32 @@ async function clone_repositories(branch, ip) {
 }
 
 async function start_dashboard() {
-  let result = await sshSync(`cd /bakerx && npm install`, `vagrant@${monitor_ip}`);
+  let result = await sshSync(`cd /bakerx && npm install`, `vagrant@${proxy_ip}`);
   if (result.error) {
     console.log(result.error);
   }
 
   console.log(chalk.keyword('orange')('Starting the Dashboard...'));
-  sshSync(`cd /bakerx && sudo npm install forever -g && forever stopall && forever start bin/www local ${blue_ip} ${green_ip}`, `vagrant@${monitor_ip}`);
+  sshSync(`cd /bakerx && pm2 kill && pm2 start bin/www -- local ${blue_ip} ${green_ip}`, `vagrant@${proxy_ip}`);
 }
 
 async function start_agents() {
   console.log(chalk.blueBright('Starting the agent on blue...'));
-  let result = await sshSync(`cd /bakerx && pm2 start index.js -- blue ${monitor_ip}`, `vagrant@${blue_ip}`);
+  let result = await sshSync(`cd /bakerx && pm2 start index.js -- blue ${proxy_ip}`, `vagrant@${blue_ip}`);
 
   console.log(chalk.greenBright('Starting the agent on green...'));
-  result = await sshSync(`cd /bakerx && pm2 start index.js -- green ${monitor_ip}`, `vagrant@${green_ip}`);
+  result = await sshSync(`cd /bakerx && pm2 start index.js -- green ${proxy_ip}`, `vagrant@${green_ip}`);
 }
 
 async function start_checkbox() {
     // Install dependencies
-  console.log(chalk.blueBright(`Installing dependencies...`));
+  console.log(chalk.blueBright(`Installing checkbox dependencies on blue...`));
   let result = await sshSync(`cd checkbox.io-micro-preview/ && npm install`, `vagrant@${blue_ip}`);
     
   console.log(chalk.blueBright('Starting checkbox microservice on blue...'));
   result = await sshSync(`cd checkbox.io-micro-preview/ && pm2 kill && pm2 start index.js`, `vagrant@${blue_ip}`);
 
-  console.log(chalk.greenBright(`Installing dependencies...`));
+  console.log(chalk.greenBright(`Installing checkbox dependencies on green...`));
   result = await sshSync(`cd checkbox.io-micro-preview && npm install`, `vagrant@${green_ip}`);
 
   console.log(chalk.greenBright('Starting checkbox microservice on green...'));
@@ -180,12 +189,12 @@ async function generateReport(blue_branch, green_branch) {
 }
 
 async function shutDown() {
-    console.log(chalk.keyword('orange')('Shutting down canaries'));
-    let result = await child.spawnSync(`bakerx`, `delete vm blue`.split(' '), {shell:true, stdio: 'inherit'} );
-    if( result.error ) { console.log(result.error); process.exit( result.status ); }
+    // console.log(chalk.keyword('orange')('Shutting down canaries'));
+    // let result = await child.spawnSync(`bakerx`, `delete vm blue`.split(' '), {shell:true, stdio: 'inherit'} );
+    // if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
-    result = await child.spawnSync(`bakerx`, `delete vm green`.split(' '), {shell:true, stdio: 'inherit'} );
-    if( result.error ) { console.log(result.error); process.exit( result.status ); }
+    // result = await child.spawnSync(`bakerx`, `delete vm green`.split(' '), {shell:true, stdio: 'inherit'} );
+    // if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
     console.log(chalk.keyword('orange')('Shutting down proxy'));
     result = await child.spawnSync(`bakerx`, `delete vm proxy`.split(' '), {shell:true, stdio: 'inherit'} );
@@ -211,12 +220,15 @@ function sleep(ms) {
 
 async function run(blue_branch, green_branch) {
     await provision_servers();
+
     console.log(chalk.keyword('orange')('Cloning repositories...'));
     await clone_repositories(blue_branch, blue_ip);
     
     await clone_repositories(green_branch, green_ip);
     
     await run_playbook();
+
+    await configure_redis();
 
     await start_checkbox();   
     

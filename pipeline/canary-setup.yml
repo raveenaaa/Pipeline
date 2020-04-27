@@ -7,3 +7,7 @@
     - setup_nodejs
     - setup_mongodb
     - setup_nginx
+
+- hosts: proxy
+  roles:
+    - setup_nodejs
