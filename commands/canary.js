@@ -13,8 +13,8 @@ exports.desc = 'Run Canary Analysis given the branches';
 
 const PASS = 'PASS';
 const FAIL = 'FAIL';
-const BLUE = path.join(__dirname, '../dashboard/', 'blue.json');
-const GREEN = path.join(__dirname, '../dashboard/', 'green.json')
+const BLUE = path.join(__dirname, '../Monitoring/dashboard/', 'blue.json');
+const GREEN = path.join(__dirname, '../Monitoring/dashboard/', 'green.json')
 const REPORT = path.join(__dirname, '../canaryReport');
 
 try {
@@ -43,23 +43,24 @@ exports.handler = async (argv) => {
 async function provision_servers() {
     console.log(chalk.keyword('orange')('Provisioning Proxy server...'));
     let result = child.spawnSync(`bakerx`, `run proxy bionic --ip ${proxy_ip} --sync`.split(' '), 
-                                {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../dashboard")} );
+                                {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../Monitoring/dashboard")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
     console.log(chalk.blueBright('Provisioning blue server...'));
     result = child.spawnSync(`bakerx`, `run blue bionic --ip ${blue_ip} --sync`.split(' '), 
-                            {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../agent")} );
+                            {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../Monitoring/agent")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
     
     console.log(chalk.greenBright('Provisioning green server...'));
     result = child.spawnSync(`bakerx`, `run green bionic --ip ${green_ip} --sync`.split(' '), 
-                            {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../agent")} );
+                            {shell:true, stdio: 'inherit', cwd: path.join(__dirname, "../Monitoring/agent")} );
     if( result.error ) { console.log(result.error); process.exit( result.status ); }
 }
 
 async function configure_redis() {
   console.log(chalk.keyword('orange')('Installing and configuring redis-server on Proxy...'));
   let srcFile = path.join(__dirname, '../pipeline/redis.sh');
+  
   result = await scpSync(srcFile, `vagrant@${proxy_ip}:/home/vagrant/redis.sh`);
       if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
@@ -94,11 +95,16 @@ async function start_dashboard() {
 }
 
 async function start_agents() {
+  console.log(chalk.keyword('orange')('Saving monitor ip in the agent VMs.'));
+  result = await sshSync(`echo "${proxy_ip}" | tee /bakerx/ip.txt`, `vagrant@${blue_ip}`);
+
+  result = await sshSync(`echo "${proxy_ip}" | tee /bakerx/ip.txt`, `vagrant@${green_ip}`);
+
   console.log(chalk.blueBright('Starting the agent on blue...'));
-  let result = await sshSync(`cd /bakerx && pm2 start index.js -- blue ${proxy_ip}`, `vagrant@${blue_ip}`);
+  result = await sshSync(`cd /bakerx && npm install && pm2 start index.js -- blue`, `vagrant@${blue_ip}`);
 
   console.log(chalk.greenBright('Starting the agent on green...'));
-  result = await sshSync(`cd /bakerx && pm2 start index.js -- green ${proxy_ip}`, `vagrant@${green_ip}`);
+  result = await sshSync(`cd /bakerx && npm install && pm2 start index.js -- green`, `vagrant@${green_ip}`);
 }
 
 async function start_checkbox() {
@@ -130,7 +136,7 @@ async function generateReport(blue_branch, green_branch) {
     const blue_metrics = JSON.parse(await fs.readFileSync(BLUE, 'utf8'));
     const green_metrics = JSON.parse(await fs.readFileSync(GREEN, 'utf8'));
 
-    console.log(chalk.keyword('orange')('\n********** REPORT **********'));
+    console.log(chalk.keyword('magenta')('\n********** REPORT **********'));
 
     var canaryScore = {
       'latency': '',
@@ -139,12 +145,12 @@ async function generateReport(blue_branch, green_branch) {
       'node': '',
       'nginx': '',
       'mongo':'', 
-      'responsive': ''
+      'statusCode': ''
     };
 
     var pass = 0;
     for (metric in blue_metrics) {
-      if (metric == 'name' || metric == 'responsive'){
+      if (metric == 'name'){
         continue
       }
       var len = Math.min(green_metrics[metric].length, blue_metrics[metric].length);
@@ -164,18 +170,18 @@ async function generateReport(blue_branch, green_branch) {
       }
     }
   }
+
   var result;
-  if (blue_metrics['responsive'] && green_metrics['responsive']) {    
-    canaryScore['responsive'] = PASS
-    if (pass / 6 >= 0.5)
+  if (canaryScore['statusCode'] == PASS) {    
+    if (pass / 7 >= 0.5)
       result = "The canary result is : " + PASS;
     else
-      result = FAIL;
+      result =  "The canary result is : " + FAIL;
   }
   else {
-    canaryScore['responsive'] = FAIL;
     result = `Green Server wasn't responsive\nThe canary result is : ` + FAIL;
   }
+
   console.log(canaryScore)
   console.log(result);  
   var report = '***** REPORT *****\n\n';
@@ -189,12 +195,12 @@ async function generateReport(blue_branch, green_branch) {
 }
 
 async function shutDown() {
-    // console.log(chalk.keyword('orange')('Shutting down canaries'));
-    // let result = await child.spawnSync(`bakerx`, `delete vm blue`.split(' '), {shell:true, stdio: 'inherit'} );
-    // if( result.error ) { console.log(result.error); process.exit( result.status ); }
+    console.log(chalk.keyword('orange')('Shutting down canaries'));
+    let result = await child.spawnSync(`bakerx`, `delete vm blue`.split(' '), {shell:true, stdio: 'inherit'} );
+    if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
-    // result = await child.spawnSync(`bakerx`, `delete vm green`.split(' '), {shell:true, stdio: 'inherit'} );
-    // if( result.error ) { console.log(result.error); process.exit( result.status ); }
+    result = await child.spawnSync(`bakerx`, `delete vm green`.split(' '), {shell:true, stdio: 'inherit'} );
+    if( result.error ) { console.log(result.error); process.exit( result.status ); }
 
     console.log(chalk.keyword('orange')('Shutting down proxy'));
     result = await child.spawnSync(`bakerx`, `delete vm proxy`.split(' '), {shell:true, stdio: 'inherit'} );
@@ -215,7 +221,7 @@ async function deleteFile(file) {
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));p
 }
 
 async function run(blue_branch, green_branch) {
@@ -237,7 +243,7 @@ async function run(blue_branch, green_branch) {
     await start_dashboard(); 
 
     // Wait for completion of canary analysis and then generate report
-    console.log(chalk.keyword('magenta')('Waiting to generate report...'));
+    console.log(chalk.keyword('orange')('Waiting to generate report...'));
 
     while (true) {
 
