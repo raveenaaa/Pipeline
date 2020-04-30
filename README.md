@@ -149,3 +149,21 @@ The jenkins build job for checkbox.io was extended to include a static analysis 
 #### Screencast:
 
 The screencast for Milestone 2 can be found [here](https://youtu.be/8NVG1skrCVQ).
+
+## Milestone 3 Report
+
+This milestone focused on provisioning cloud instances for monitor, checkbox and iTrust and further deploying the applications to those cloud instances. Also a canary analysis was done on the checkbox.io preview microservice.
+
+#### Task 1 - Provision cloud instances, monitoring control plane
+
+
+#### Task 2 - Implement deployment to cloud instances
+
+
+#### Task 3 - Implement canary analysis (checkbox.io preview microservice) 
+
+
+#### Screencast:
+
+
+
