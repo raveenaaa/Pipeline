@@ -56,6 +56,7 @@ async function run() {
         }
 
     }
+
     console.log(
         chalk.blueBright('Copying the Monitoring code')
       );
@@ -260,6 +261,26 @@ async function run() {
       if (result.error) {
         console.log(result.error);
         process.exit(result.status);
+      }
+
+      console.log(chalk.blueBright('Install ufw on checkbox'));
+      result = sshSync(
+          `sudo apt-get install ufw && sudo ufw default allow incoming && sudo ufw allow ssh && sudo ufw --force enable`,
+          `root@${servers['checkbox'][0]}`
+      );
+      if (result.error) {
+          console.log(result.error);
+          process.exit(result.status);
+      }
+
+    console.log(chalk.blueBright('Install ufw on itrust'));
+      result = sshSync(
+          `sudo apt-get install ufw && sudo ufw default allow incoming && sudo ufw allow ssh && sudo ufw --force enable`,
+          `root@${servers['itrust'][0]}`
+      );
+      if (result.error) {
+          console.log(result.error);
+          process.exit(result.status);
       }
 
       console.log(chalk.blueBright('npm install'));
