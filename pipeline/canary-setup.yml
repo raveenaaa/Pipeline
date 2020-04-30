@@ -7,7 +7,9 @@
     - setup_nodejs
     - setup_mongodb
     - setup_nginx
+    - setup_pm2
 
 - hosts: proxy
   roles:
     - setup_nodejs
+    - setup_pm2
