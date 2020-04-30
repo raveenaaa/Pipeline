@@ -3,6 +3,11 @@
 [jenkins:vars]
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
+[proxy]
+192.168.50.20   ansible_ssh_private_key_file=~/.ssh/deploy_rsa    ansible_user=vagrant
+[proxy:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
 [blue]
 192.168.50.25   ansible_ssh_private_key_file=~/.ssh/deploy_rsa    ansible_user=vagrant
 [blue:vars]

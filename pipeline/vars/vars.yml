@@ -24,7 +24,7 @@ smtp_from: csc519s20.11@gmail.com
 smtp_username: csc519s20.11
 
 # Canary Variables
-monitor_ip: 192.168.50.20
+proxy_ip: 192.168.50.20
 green_ip: 192.168.50.30
 blue_ip: 192.168.50.25
 

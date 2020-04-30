@@ -1,0 +1,11 @@
+***** REPORT *****
+
+latency:PASS
+memory:PASS
+cpu:PASS
+node:PASS
+nginx:PASS
+mongo:PASS
+responsive:PASS
+
+The canary result is : PASS

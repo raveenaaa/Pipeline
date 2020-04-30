@@ -19,14 +19,13 @@ const LOAD_INTERVAL = 5000;
 const SURVEY = 'survey.json';
 
 // Our arrays for metrics for final report generation
-var canaryScore = [];
 var cpuArr = [];
 var memArr = [];
 var mongoArr = [];
 var nodeArr = [];
 var nginxArr = [];
 var latencyArr = [];
-var mysqlArr = [];
+var statusCodeArr = [];
 var srvName;
 
 // Get the environment type from commandline args
@@ -43,46 +42,29 @@ var	servers =
 	{name: "green", url:`http://${args[2]}:3000/preview`, status: "#cccccc",  scoreTrend : [0]}
 	];
 
-async function generateReport() 
+async function saveMetrics() 
 {
 	const data = {
 		name : srvName,
-		latency: round(await getAverage(latencyArr)),
-		memory: round(await getAverage(memArr)),
-		cpu: round(await getAverage(cpuArr)),
-		nginx: round(await getAverage(nginxArr)),
-		node: round(await getAverage(nodeArr)),
-		mongo: round(await getAverage(mongoArr)),
-		mysql: round(await getAverage(mysqlArr)),
-		canaryScore: round(await getAverage(canaryScore)),
-		result: await getAverage(canaryScore) < 0.5 ? 'FAIL' : 'PASS',
+		latency: latencyArr,
+		memory: memArr,
+		cpu: cpuArr,
+		nginx: nginxArr,
+		node: nodeArr,
+		mongo: mongoArr,
+		statusCode: statusCodeArr
 	};
 	 
 	await fs.writeFileSync(`${data.name}.json`, JSON.stringify(data), 'utf8');
 
 	srvName = '';
 	memArr = [];
-	canaryScore = [];
 	cpuArr = [];
-	memArr = [];
-	mongoArr = [];
+	latencyArr = [];
 	nodeArr = [];
 	nginxArr = [];
-	latencyArr = [];
-	mysqlArr = [];
-}
-
-function getAverage(arr) {
-	var total = 0
-	for (var element of arr) {
-		total += element
-	}
-
-	return total / arr.length
-}
-
-function round(num) {
-	return Math.round(num * 100) / 100
+	mongoArr = [];
+	statusCodeArr = [];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -90,7 +72,7 @@ function round(num) {
 ////////////////////////////////////////////////////////////////////////////////////////
 // For the First 5 minutes it routes traffic to BLUE
 // For the next 5 minutes it routes traffic to GREEN
-// Finally it terminates the servers using `forever stopall`
+// Finally it terminates the servers using `pm2 kill`
 class Proxy
 {
     constructor()
@@ -116,12 +98,12 @@ class Proxy
 
    async switchover()
    {
-	  await generateReport();
+	  await saveMetrics();
       this.TARGET = GREEN;
 	  console.log(chalk.keyword('pink')(`Switching over to ${this.TARGET} ...`));
 	  setTimeout(async function() {
-		await generateReport();
-		child.execSync('forever stopall', {stdio: 'inherit'});
+		await saveMetrics();
+		child.execSync('pm2 kill', {stdio: 'inherit'});
 	}, SWITCH_TIME); 
    } 
    
@@ -130,7 +112,7 @@ class Proxy
    // We will survey.json to be rendered
    async sendLoad() {
        
-            console.log(chalk.keyword('orange')(`******* ${this.TARGET} *******`));
+            // console.log(chalk.keyword('orange')(`******* ${this.TARGET} *******`));
             var options = {
                 headers: {
                     'Content-type': 'application/json'
@@ -166,7 +148,7 @@ function start(app)
 	////////////////////////////////////////////////////////////////////////////////////////
 	// DASHBOARD
 	////////////////////////////////////////////////////////////////////////////////////////
-	const io = require('socket.io')(3005);
+	const io = require('socket.io')(3000);
 	// Force websocket protocol, otherwise some browsers may try polling.
 	io.set('transports', ['websocket']);
 	// Whenever a new page/client opens a dashboard, we handle the request for the new socket.
@@ -224,15 +206,14 @@ function start(app)
 	proxy.proxy();
 }
 
-function recordMetrics(server, score) {
-	canaryScore.push(score);
+function recordMetrics(server) {
 	latencyArr.push(server.latency);
 	memArr.push(server.memoryLoad);
 	cpuArr.push(server.cpu);
 	nodeArr.push(server.node);
 	nginxArr.push(server.nginx);
 	mongoArr.push(server.mongo);
-	mysqlArr.push(server.mysql);
+	statusCodeArr.push(server.statusCode);
 	srvName = server.name;
 }
 
@@ -277,7 +258,7 @@ async function updateHealth(server)
 		}
 	}
 
-	recordMetrics(server, score/4);
+	recordMetrics(server);
 
 	server.status = score2color(score/4);
 	// console.log(`${server.name} ${score} ${canary}`);
