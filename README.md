@@ -170,7 +170,7 @@ Following are the tasks involved in the execution of the canary analysis:
 * On blue and green install `nodejs`, `mongo`, `nginx`, `pm2`.
 * On the proxy install `nodejs`, `pm2`.
 * Start the agent and the checkbox.io microservice on the blue and green canaries.
-* Start the dashboard service on the proxy and gather metrics.
+* Start the dashboard service on the proxy and gather metrics. You can see the dashboard running at the http://192.168.50.20:8080/
 * Proxy will route traffic to blue instance for the first 5 minutes and then switchover to the green instance.
 * Report statistical comparison between the metrics of blue and green using the Mann-Whitney-Utest of significance.
 
