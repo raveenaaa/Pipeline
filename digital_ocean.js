@@ -114,7 +114,7 @@ class DigitalOceanProvider
 		{
 			"name": dropletName,
 			"region":region,
-			"size":"512mb",
+			"size":"2gb",
 			"image":imageName,
 			"ssh_keys":ssh_id,
 			"backups":false,
@@ -248,8 +248,11 @@ async function provision()
 			}
 			await sleep(5000);
 		}
+		var inventory = "[" + name + "]\n" + ip[1].ip_address + " ansible_ssh_private_key_file=~/.ssh/deploy_rsa ansible_user=root\n";
+		fs.appendFileSync( "pipeline/cloud_inventory", inventory);
 	}
 	fs.writeFileSync( "server_ip.json", JSON.stringify( server_ip ) );
+	
 	// Record the droplet id that you see print out in a variable.
 	// We will use this to interact with our droplet for the next steps.
 
