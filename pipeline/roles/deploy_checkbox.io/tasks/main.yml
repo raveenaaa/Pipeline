@@ -1,11 +1,9 @@
 ---
-- name: Create a deploy directory if it does not exist
+- name: Install "pm2" node.js package.
   become: yes
-  file:
-    path: '{{ project_path }}'
-    state: directory
-    owner: vagrant
-    group: vagrant
+  npm:
+    name: pm2
+    global: yes
 
 - name: Set some variable
   set_fact:
@@ -21,11 +19,12 @@
     recurse: yes
     state: directory
 
-- name: Clone the repository
+- name: Copy production files
   become: yes
-  git:
-    repo: https://github.com/chrisparnin/checkbox.io.git
-    dest: '{{ release_path }}'
+  unarchive:
+    src: '{{ project_path }}/current.tar.gz'
+    dest: '{{ release_path }}/'
+    extra_opts: [--strip-components=1]
 
 - name: Update symlink
   become: yes
@@ -37,12 +36,6 @@
 - name: Delete old pm2 process
   command: pm2 kill
   ignore_errors: yes
-
-- name: Install packages based on package.json.
-  become: yes
-  npm:
-    path: '{{ app_path }}'
-    production: yes
 
 - name: Start pm2
   command: pm2 start server.js --name checkbox-app

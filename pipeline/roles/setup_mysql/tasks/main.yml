@@ -1,0 +1,43 @@
+---
+- name: Specify MySQL root password before installing MySQL
+  become: yes
+  debconf:
+    name: mysql-server
+    question: mysql-server/root_password
+    value: '{{ mysql_pwd }}'
+    vtype: password
+
+- name: MySQL root password confirmation
+  become: yes
+  debconf:
+    name: mysql-server
+    question: mysql-server/root_password_again
+    value: '{{ mysql_pwd }}'
+    vtype: password
+
+- name: Install MySQL server
+  become: yes
+  apt:
+    name: mysql-server
+    state: present
+
+- name: Install pip, setuptools
+  become: yes
+  apt:
+    name:
+      - python3-pip
+      - python-pip
+      - python-setuptools
+    state: present
+    update_cache: yes
+
+- name: Install PyMySQL module
+  become: yes
+  pip:
+    name: PyMySQL
+    state: present
+
+- name: start MySQL
+  service:
+    name: mysql
+    state: started

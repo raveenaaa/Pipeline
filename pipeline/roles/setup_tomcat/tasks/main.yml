@@ -1,0 +1,81 @@
+---
+- name: add group "tomcat"
+  become: yes
+  group:
+    name: tomcat
+
+- name: add user "tomcat"
+  become: true
+  user:
+    name: tomcat
+    group: tomcat
+    createhome: yes
+
+- name: Download Tomcat
+  become: yes
+  get_url:
+    url: https://downloads.apache.org/tomcat/tomcat-9/v9.0.34/bin/apache-tomcat-9.0.34.tar.gz
+    dest: /opt/tomcat.tar.gz
+
+- name: Extract Tomcat archive
+  become: yes
+  command: tar zxvf /opt/tomcat.tar.gz -C /opt/
+
+- name: Extract Tomcat archive
+  become: yes
+  command: mv /opt/apache-tomcat-9.0.34 /opt/tomcat
+  ignore_errors: yes
+
+- name: Change ownership of Tomcat installation
+  become: yes
+  file:
+    path: /opt/tomcat
+    owner: tomcat
+    group: tomcat
+    state: directory
+    recurse: yes
+
+- name: Configure Tomcat server
+  become: yes
+  become_user: tomcat
+  template:
+    src: server.xml
+    dest: /opt/tomcat/conf/
+
+- name: Configure Tomcat users
+  become: yes
+  become_user: tomcat
+  template:
+    src: tomcat-users.xml
+    dest: /opt/tomcat/conf/
+
+- name: Copy Tomcat service config
+  become: yes
+  template:
+    src: tomcat.service
+    dest: /etc/systemd/system/
+
+- name: Create a directory if it does not exist
+  become: yes
+  file:
+    path: /opt/tomcat/run
+    state: directory
+    owner: tomcat
+    group: tomcat
+
+- name: Reload services
+  become: yes
+  systemd:
+    daemon_reload: yes
+
+- name: Start the tomcat service
+  become: yes
+  systemd:
+    state: restarted
+    name: tomcat
+
+- name: Enable the tomcat service
+  become: yes
+  systemd:
+    name: tomcat
+    enabled: yes

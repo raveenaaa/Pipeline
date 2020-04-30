@@ -87,4 +87,13 @@ async function run(privateKey, username, password) {
     console.log(result.error);
     process.exit(result.status);
   }
+
+  result = sshSync(
+    `ansible-playbook --vault-password-file vault_pass.txt "/bakerx/pipeline/playbook.yml" -i "/bakerx/pipeline/inventory" -vvvv -e "git_username=${username}" -e "git_password=${password}"`,
+    'vagrant@192.168.33.10'
+  );
+  if (result.error) {
+    console.log(result.error);
+    process.exit(result.status);
+  }
 }

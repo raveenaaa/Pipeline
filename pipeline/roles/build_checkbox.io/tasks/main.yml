@@ -1,0 +1,33 @@
+---
+- name: Delete deploy directory
+  become: yes
+  file:
+    path: '{{ project_path }}'
+    state: absent
+
+- name: Create a deploy directory
+  become: yes
+  file:
+    path: '{{ project_path }}'
+    state: directory
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+
+- name: Clone the repository
+  become: yes
+  git:
+    repo: https://github.com/chrisparnin/checkbox.io.git
+    dest: '{{ project_path }}/current'
+
+- name: Install packages based on package.json.
+  become: yes
+  npm:
+    path: '{{ project_path }}/current/server-side/site'
+    production: yes
+
+- name: Create a tar.gz archive of a single file.
+  archive:
+    path: '{{ project_path }}/current'
+    dest: '{{ project_path }}/current.tar.gz'
+    format: gz
+    force_archive: true

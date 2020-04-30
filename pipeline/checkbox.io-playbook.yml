@@ -1,4 +1,12 @@
 # Playbook to handle pipeline deploy checkbox.io
+- hosts: localhost
+  vars:
+    project_path: /var/www/nodejs
+  vars_files:
+    - /bakerx/pipeline/vars/vars.yml
+    - /bakerx/pipeline/vars/secrets.yml
+  roles:
+    - build_checkbox.io
 - hosts: checkbox
   vars:
     project_path: /var/www/nodejs

@@ -1,0 +1,69 @@
+---
+- name: Create a deploy directory if it does not exist
+  become: yes
+  file:
+    path: '{{ project_path }}'
+    state: directory
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+
+- name: Set some variables
+  set_fact:
+    release_path: "{{ project_path }}/releases/{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+    current_path: '{{ project_path }}/current'
+    app_path: '{{ project_path }}/current/iTrust2'
+
+- name: Create new folder
+  become: yes
+  file:
+    dest: '{{ release_path }}'
+    mode: 0755
+    recurse: yes
+    state: directory
+
+- name: Copy war from build server
+  become: yes
+  copy:
+    src: '{{ app_path }}/target/iTrust2.war'
+    dest: '{{ release_path }}'
+    owner: tomcat
+    group: tomcat
+    mode: 0744
+
+- name: Copy database dump file
+  become: yes
+  copy:
+    src: /tmp/iTrust.sql
+    dest: /tmp
+
+- name: Import iTrust.sql to database
+  become: yes
+  mysql_db:
+    state: import
+    name: all
+    target: /tmp/iTrust.sql
+    login_user: '{{ mysql_user }}'
+    login_password: '{{ mysql_pwd }}'
+
+- name: Update symlink
+  become: yes
+  file:
+    src: '{{ release_path }}'
+    dest: '{{ current_path }}'
+    state: link
+
+- name: Copy war to tomcat directory
+  become: yes
+  copy:
+    src: '{{ current_path }}/iTrust2.war'
+    remote_src: yes
+    dest: /opt/tomcat/webapps/iTrust2.war
+    owner: tomcat
+    group: tomcat
+    mode: 0744
+
+- name: Start the tomcat service
+  become: yes
+  systemd:
+    state: restarted
+    name: tomcat

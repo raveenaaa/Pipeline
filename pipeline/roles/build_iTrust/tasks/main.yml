@@ -1,0 +1,78 @@
+---
+- name: Delete deploy directory
+  become: yes
+  file:
+    path: '{{ project_path }}'
+    state: absent
+
+- name: Create a deploy directory
+  become: yes
+  file:
+    path: '{{ project_path }}'
+    state: directory
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+
+- name: Set some variables
+  set_fact:
+    current_path: '{{ project_path }}/current'
+    app_path: '{{ project_path }}/current/iTrust2'
+
+- name: Clone the repository
+  become: yes
+  git:
+    repo: 'https://{{ git_username }}:{{ git_password }}@github.ncsu.edu/engr-csc326-staff/iTrust2-v6.git'
+    dest: '{{ current_path }}'
+
+- name: Copy db config
+  become: yes
+  copy:
+    remote_src: yes
+    src: '{{ app_path }}/src/main/java/db.properties.template'
+    dest: '{{ app_path }}/src/main/java/db.properties'
+
+- name: Edit db password
+  become: yes
+  lineinfile:
+    dest: '{{ app_path }}/src/main/java/db.properties'
+    regexp: '^password'
+    line: 'password {{ mysql_pwd }}'
+
+- name: Copy email config
+  become: yes
+  copy:
+    remote_src: yes
+    src: '{{ app_path }}/src/main/java/email.properties.template'
+    dest: '{{ app_path }}/src/main/java/email.properties'
+
+- name: Edit email properties
+  become: yes
+  lineinfile:
+    dest: '{{ app_path }}/src/main/java/email.properties'
+    regexp: '{{item.From}}'
+    line: '{{item.To}}'
+  with_items:
+    - { From: '^from', To: 'from {{ smtp_from }}' }
+    - { From: '^username', To: 'username {{ smtp_username }}' }
+    - { From: '^password', To: 'password {{ smtp_password }}' }
+
+- name: Build database and sample data
+  become: yes
+  command: mvn -f pom-data.xml process-test-classes
+  args:
+    chdir: '{{ app_path }}'
+
+- name: Dump all databases to iTrust.sql
+  become: yes
+  mysql_db:
+    state: dump
+    name: all
+    target: /tmp/iTrust.sql
+    login_user: '{{ mysql_user }}'
+    login_password: '{{ mysql_pwd }}'
+
+- name: Create iTrust2.war file
+  become: yes
+  shell: mvn package
+  args:
+    chdir: '{{ app_path }}'

@@ -27,3 +27,9 @@ smtp_username: csc519s20.11
 monitor_ip: 192.168.50.20
 green_ip: 192.168.50.30
 blue_ip: 192.168.50.25
+
+# Deploy apps
+http_port: 8080
+https_port: 443
+tomcat_username: admin
+tomcat_password: pass

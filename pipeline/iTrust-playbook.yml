@@ -1,0 +1,22 @@
+# Playbook to handle pipeline deploy iTrust
+- hosts: localhost
+  vars:
+    project_path: /var/www/iTrust
+    git_username: '{{ lookup("env","GIT_USERNAME") }}'
+    git_password: '{{ lookup("env","GIT_PASSWORD") }}'
+  vars_files:
+    - /bakerx/pipeline/vars/vars.yml
+    - /bakerx/pipeline/vars/secrets.yml
+  roles:
+    - build_iTrust
+- hosts: itrust
+  vars:
+    project_path: /var/www/iTrust
+  vars_files:
+    - /bakerx/pipeline/vars/vars.yml
+    - /bakerx/pipeline/vars/secrets.yml
+  roles:
+    - setup_tomcat
+    - setup_java
+    - setup_mysql
+    - deploy_iTrust

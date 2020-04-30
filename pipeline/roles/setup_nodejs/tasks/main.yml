@@ -20,9 +20,3 @@
   apt:
     state: present
     name: nodejs
-
-- name: Install "pm2" node.js package.
-  become: yes
-  npm:
-    name: pm2
-    global: yes

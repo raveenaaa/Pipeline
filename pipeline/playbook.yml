@@ -1,17 +1,10 @@
-# Main playbook that runs the 'Configure jenkins server task'
-# We need to install dependencies first
-# And set up env variables first
-- hosts: jenkins
+# Configure build environment for iTrust and checkbox.io
+- hosts: localhost
   vars_files:
     - /bakerx/pipeline/vars/vars.yml
     - /bakerx/pipeline/vars/secrets.yml
   roles:
     - setup_nodejs
-    - setup_mongodb
+    - setup_java
+    - setup_mysql
     - setup_iTrust_build_env
-    - setup_nginx
-    - jenkins
-    - setup_build_job
-    - setup_mutation_files
-    - setup_iTrust_build_job
-    - static_analysis
