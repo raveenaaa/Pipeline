@@ -162,6 +162,32 @@ This milestone focused on provisioning cloud instances for monitor, checkbox and
 
 #### Task 3 - Implement canary analysis (checkbox.io preview microservice) 
 
+The command is as follows: `pipeline canary <blue-branch> <green-branch>`
+
+Following are the tasks involved in the execution of the canary analysis:
+
+* Provision the proxy, blue (baseline), and green VMs.
+* Install the requisite dependencies on each Vm.
+* Start the agent and the checkbox.io microservice on the blue and green canaries
+* Start the dashboard service on the proxy and gather metrics.
+* Proxy will route traffic to blue instance for the first 5 minutes and then switchover to the green instance.
+* Report statistical comparison between the metrics of blue and green using the Mann-Whitney-Utest of significance.
+
+Following are the metrics we have used:
+* CPU usage %
+* Memory usage %
+* Node memory usage %
+* Nginx memory usage %
+* MongoDb memory usage %
+* MySQL memory usage %
+* Lattency (ms)
+* HTTP Status code
+
+We have defined that a canary will pass if:
+* HTTP Status code `PASS` and canaryScore > 50%
+
+##### Note:
+We have kept the agent (`Monitoring/agent/`) and dashboard (`Monitoring/dashboard`) common for the cloud and local instances. While `MySql` is a dependency of `iTrust` it is not used in `checkbox.io`. Hence you may observe that the `MySQL memory usage %` is consistently 0 during the canary analysis for both blue and green. Keeping this in mind, we have not included MySql metric in our final canary analysis reports.
 
 #### Screencast:
 
