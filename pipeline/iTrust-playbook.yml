@@ -16,7 +16,7 @@
     - /bakerx/pipeline/vars/vars.yml
     - /bakerx/pipeline/vars/secrets.yml
   roles:
-    - setup_tomcat
     - setup_java
+    - setup_tomcat
     - setup_mysql
     - deploy_iTrust
