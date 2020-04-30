@@ -76,6 +76,10 @@ function start(app)
 				server.memoryLoad = payload.memoryLoad;
 				server.cpu = payload.cpu;
 				server.systemLoad = payload.systemLoad;
+				server.nginx = payload.nginx;
+				server.mongo = payload.mongo;
+				server.node = payload.node;
+				server.mysql = payload.mysql;
 				updateHealth(server);
 			}
 		}
