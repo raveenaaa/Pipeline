@@ -1,0 +1,7 @@
+---
+# Role that installs pm2 package
+- name: Install "pm2" node.js package.
+  become: yes
+  npm:
+    name: pm2
+    global: yes
