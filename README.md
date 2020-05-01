@@ -196,11 +196,11 @@ The command is as follows: `pipeline deploy <project-name> -i <inventory-file>`
 
 The following steps are involved in this task:
 
-- Clone the repository and build the project
-- The latest code will be found at `<project-path>/current` and previous releases can be found at `<project-path>/releases`
+- Clone the repository and build the project on the ansible server
+- The latest release will be found at `<project-path>/current` and previous releases can be found at `<project-path>/releases`
 - Read the inventory file and ssh into the deployment server to deploy the project
 - Install the necessary deployment dependancies
-- Copy over the artifacts from the configuration server onto the deployment server
+- Copy over the artifacts from the ansible server onto the deployment server
 - Restart the webserver
 - To browser the deployed projects, visit `<ip>` for checbox.io and `<ip>:8080/iTrust2` for iTrust
 
