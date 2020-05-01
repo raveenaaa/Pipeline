@@ -32,7 +32,7 @@ exports.handler = async (argv) => {
 
 async function run(projectName, inventoryFile) {
   result = sshSync(
-    `ansible-playbook --vault-password-file vault_pass.txt "/bakerx/pipeline/${projectName}-playbook.yml" -i "/bakerx/pipeline/${inventoryFile}" -vvvv`,
+    `ansible-playbook --vault-password-file vault_pass.txt "/bakerx/pipeline/${projectName}-playbook.yml" -i "/bakerx/${inventoryFile}" -vvvv`,
     'vagrant@192.168.33.10'
   );
   if (result.error) {
