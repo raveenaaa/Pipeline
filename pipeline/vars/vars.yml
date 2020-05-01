@@ -32,4 +32,3 @@ blue_ip: 192.168.50.25
 http_port: 8080
 https_port: 443
 tomcat_username: admin
-tomcat_password: pass
