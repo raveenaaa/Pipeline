@@ -3,7 +3,7 @@
 ## Checkpoint Report
 
 A link to Milestone 1 checkpoint report can be found [here](/CHECKPOINT.md).  
-A link to Milestone 2 checkpoint report can be found [here](/CHECKPOINT-M2.md).    
+A link to Milestone 2 checkpoint report can be found [here](/CHECKPOINT-M2.md).  
 A link to Milestone 3 checkpoint report can be found [here](/CHECKPOINT-M3.md).
 
 ## Milestone 1 Report
@@ -111,28 +111,30 @@ pipeline build iTrust
 #### Task 2 - 🧪 Implement a test suite analysis for detecting useful tests
 
 ##### Fuzzer
+
 We developed a fuzzer that performs the following fuzzing operations on 10% lines of a given file:
 
-   - swap "==" with "!="
-   - swap 0 with 1
-   - change content of "strings" in code.
-   - randomly change numbers in code
-   - swap "<" with ">"
-   - swap true with false
+- swap "==" with "!="
+- swap 0 with 1
+- change content of "strings" in code.
+- randomly change numbers in code
+- swap "<" with ">"
+- swap true with false
 
 ##### Test prioritization analysis
 
 We used a driver node.js code that runs the entire test suite for 100 iterations and generates the report. In each iteration it does the following tasks for up to 10% of the files:
 
-* Drop exisiting database
-* Regenerate the test classes using `mvn -f pom-data.xml process-test-classes`
-* Generate random changes with fuzzer.
-* If changes result in compile failures, discard changes and restart process.
-* Run tests with `mvn clean test verify`.
-* Record which test cases have failed, and which have passed.
-* Reset code, discarding your changes.
+- Drop exisiting database
+- Regenerate the test classes using `mvn -f pom-data.xml process-test-classes`
+- Generate random changes with fuzzer.
+- If changes result in compile failures, discard changes and restart process.
+- Run tests with `mvn clean test verify`.
+- Record which test cases have failed, and which have passed.
+- Reset code, discarding your changes.
 
 After 100 iterations, it generates a [report](https://github.ncsu.edu/cscdevops-spring2020/DEVOPS-11/blob/master/pipeline/report.txt). The format of the report is as follows:
+
 ```
 <Classname>:<Testname> => Passed: _ Failed: _ Total: _
 ```
@@ -140,6 +142,7 @@ After 100 iterations, it generates a [report](https://github.ncsu.edu/cscdevops-
 #### Task 3 - ✅ Implement a static analysis for checkbox.io
 
 In this task, we implemented a static JavaScript code analyzer using esprima. The static analysis is performed on all the javascript files present inside checkbox.io. The analyzer is implemented to detect the following code smells:
+
 - Long Methods (LOC > 100)
 - Long Message Chains (Chain length > 10)
 - Max Nesting Depth (Depth > 5)
@@ -156,54 +159,84 @@ This milestone focused on provisioning cloud instances for monitor, checkbox and
 
 #### Task 1 - Provision cloud instances, monitoring control plane
 
-The command is as follows: `pipeline prod up`  
+The command is as follows: `pipeline prod up`
 
-The following steps are involved in this task:  
+The following steps are involved in this task:
 
-* Provision 3 Virtual Machines on DigitalOcean using the API. Enable private networking and IPv6 while provisioning. Before running the prod up command, export your ssh key to the env variable `SSH_KEY` and the DigitalOcean token to the env variable `DOTOKEN`. The following are the VMs:  
+- Provision 3 Virtual Machines on DigitalOcean using the API. Enable private networking and IPv6 while provisioning. Before running the prod up command, export your ssh key to the env variable `SSH_KEY` and the DigitalOcean token to the env variable `DOTOKEN`. The following are the VMs:
   - Monitor
   - Checkbox
   - iTrust
-* Copy the IP address of the provisioned VMs to an inventory file for deployment
-* Configure the Monitoring code to work on cloud VMs and to support additional metrics
-* Copy the Monitoring code on the Monitor VM and the agent code on the Checkbox and iTrust VMs
-* Configue redis conf file on the VM to allow incoming response
-* Start the dashboard and agent using forever on all the VMs
+- Copy the IP address of the provisioned VMs to an inventory file for deployment
+- Configure the Monitoring code to work on cloud VMs and to support additional metrics
+- Copy the Monitoring code on the Monitor VM and the agent code on the Checkbox and iTrust VMs
+- Configue redis conf file on the VM to allow incoming response
+- Start the dashboard and agent using forever on all the VMs
 
 #### Task 2 - Implement deployment to cloud instances
 
+This task has 2 subtasks:
 
-#### Task 3 - Implement canary analysis (checkbox.io preview microservice) 
+- Provision and setup the configuration server
+- Deploy checkbox.io and iTrust on a deployment server
+
+##### Provision and setup the configuration server
+
+The command is as follows: `pipeline setup --gh-user <github-username> --gh-pass <github-password>`
+
+The following steps are involved in this task:
+
+- Provision the configuration server `ansible-srv` and install ansible on it
+- Install the necessary build dependencies for iTrust and checkbox.io
+- Setup the environment variables for the git credentials to clone the iTrust repo
+
+##### Deploy checkbox.io and iTrust on a deployment server
+
+The command is as follows: `pipeline deploy <project-name> -i <inventory-file>`
+
+The following steps are involved in this task:
+
+- Clone the repository and build the project
+- The latest code will be found at `<project-path>/current` and previous releases can be found at `<project-path>/releases`
+- Read the inventory file and ssh into the deployment server to deploy the project
+- Install the necessary deployment dependancies
+- Copy over the artifacts from the configuration server onto the deployment server
+- Restart the webserver
+- To browser the deployed projects, visit `<ip>` for checbox.io and `<ip>:8080/iTrust2` for iTrust
+
+#### Task 3 - Implement canary analysis (checkbox.io preview microservice)
 
 The command is as follows: `pipeline canary <blue-branch> <green-branch>`
 
 Following are the tasks involved in the execution of the canary analysis:
 
-* Provision the proxy, blue (baseline), and green VMs.
-* On blue and green install `nodejs`, `mongo`, `nginx`, `pm2`.
-* On the proxy install `nodejs`, `pm2`.
-* Start the agent and the checkbox.io microservice on the blue and green canaries.
-* Start the dashboard service on the proxy and gather metrics. You can see the dashboard running at the http://192.168.50.20:8080/
-* Proxy will route traffic to blue instance for the first 5 minutes and then switchover to the green instance.
-* Report statistical comparison between the metrics of blue and green using the Mann-Whitney-Utest of significance.
+- Provision the proxy, blue (baseline), and green VMs.
+- On blue and green install `nodejs`, `mongo`, `nginx`, `pm2`.
+- On the proxy install `nodejs`, `pm2`.
+- Start the agent and the checkbox.io microservice on the blue and green canaries.
+- Start the dashboard service on the proxy and gather metrics. You can see the dashboard running at the http://192.168.50.20:8080/
+- Proxy will route traffic to blue instance for the first 5 minutes and then switchover to the green instance.
+- Report statistical comparison between the metrics of blue and green using the Mann-Whitney-Utest of significance.
 
 Following are the metrics we have collected:
-* CPU usage %
-* Memory usage %
-* Node memory usage %
-* Nginx memory usage %
-* MongoDb memory usage %
-* MySQL memory usage %
-* Lattency (ms)
-* HTTP Status code
+
+- CPU usage %
+- Memory usage %
+- Node memory usage %
+- Nginx memory usage %
+- MongoDb memory usage %
+- MySQL memory usage %
+- Lattency (ms)
+- HTTP Status code
 
 We have defined that a canary will pass if:
-* HTTP Status code `PASS` and canaryScore >= 50%
+
+- HTTP Status code `PASS` and canaryScore >= 50%
 
 ##### Note:
+
 We have kept the agent (`Monitoring/agent/`) and dashboard (`Monitoring/dashboard`) common for the cloud and local instances. While `MySQL` is a dependency of `iTrust` it is not used in `checkbox.io`. Hence you may observe that the `MySQL memory usage %` is consistently 0 during the canary analysis for both blue and green. Keeping this in mind, we have not included MySQL metric in our final canary analysis reports.
 
 #### Screencast:
 
-
-
+The screencast for Milestone 2 can be found [here](https://youtu.be/K418Rjnduoo).
