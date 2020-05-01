@@ -124,7 +124,7 @@ async function start_checkbox() {
 
 async function run_playbook() {
   console.log(chalk.keyword('orange')('Running playbook to install dependencies...'));
-    const cmd = `ansible-playbook --vault-password-file vault_pass.txt /bakerx/pipeline/canary-setup.yml -i /bakerx/pipeline/inventory`;
+    const cmd = `ansible-playbook --vault-password-file vault_pass.txt /bakerx/pipeline/canary-setup.yml -i /bakerx/pipeline/canary-inventory.ini`;
     result = await sshSync(cmd,`vagrant@${ansible_ip}`);
     if (result.error) {
         console.log(result.error);
