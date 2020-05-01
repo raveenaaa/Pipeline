@@ -2,6 +2,8 @@ const child = require('child_process');
 const chalk = require('chalk');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
+const yaml = require('js-yaml');
 
 const scpSync = require('../lib/scp');
 const sshSync = require('../lib/ssh');
@@ -25,6 +27,19 @@ exports.builder = (yargs) => {
   });
 };
 
+try {
+  const vars_file =  path.join(__dirname, "../pipeline/vars/", "vars.yml");
+
+  let fileContents = fs.readFileSync(vars_file);
+  let data = yaml.safeLoad(fileContents);
+
+  ansible_ip = data.ansible_ip;
+}
+catch(e) {
+  console.log(e);
+}
+
+
 exports.handler = async (argv) => {
   const { privateKey } = argv;
   const username = encodeURIComponent(argv['gh-user']);
@@ -41,7 +56,7 @@ async function run(privateKey, username, password) {
   console.log(chalk.blueBright('Provisioning configuration server...'));
   let result = child.spawnSync(
     `bakerx`,
-    `run ansible-srv bionic --ip 192.168.33.10 --sync`.split(' '),
+    `run ansible-srv bionic --ip ${ansible_ip} --sync`.split(' '),
     {
       shell: true,
       stdio: 'inherit',
@@ -74,7 +89,7 @@ async function run(privateKey, username, password) {
     privateKey || path.join(os.homedir(), '.bakerx', 'insecure_private_key');
   result = scpSync(
     identifyFile,
-    'vagrant@192.168.33.10:/home/vagrant/.ssh/deploy_rsa'
+    `vagrant@${ansible_ip}:/home/vagrant/.ssh/deploy_rsa`
   );
   if (result.error) {
     console.log(result.error);
@@ -84,7 +99,7 @@ async function run(privateKey, username, password) {
   console.log(chalk.blueBright('Running init script...'));
   result = sshSync(
     `/bakerx/pipeline/server-init.sh ${username} ${password}`,
-    'vagrant@192.168.33.10'
+    `vagrant@${ansible_ip}`
   );
   if (result.error) {
     console.log(result.error);
@@ -93,7 +108,7 @@ async function run(privateKey, username, password) {
 
   result = sshSync(
     `ansible-playbook --vault-password-file vault_pass.txt "/bakerx/pipeline/playbook.yml" -i "/bakerx/pipeline/inventory" -vvvv -e "git_username=${username}" -e "git_password=${password}"`,
-    'vagrant@192.168.33.10'
+    `vagrant@${ansible_ip}`
   );
   if (result.error) {
     console.log(result.error);
