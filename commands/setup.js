@@ -53,16 +53,19 @@ async function run(privateKey, username, password) {
   }
 
   // Temporarily setup a deploy server until the provisioning step is done
-  console.log(chalk.blueBright('Provisioning deploy server...'));
-  result = child.spawnSync(
-    `bakerx`,
-    `run deploy-srv bionic --ip 192.168.33.20 --memory 3072`.split(' '),
-    { shell: true, stdio: 'inherit' }
-  );
-  if (result.error) {
-    console.log(result.error);
-    process.exit(result.status);
-  }
+  // console.log(chalk.blueBright('Provisioning deploy server...'));
+  // result = child.spawnSync(
+  //   `bakerx`,
+  //   `run deploy-srv bionic --ip 192.168.33.20 --memory 3072`.split(' '),
+  //   {
+  //     shell: true,
+  //     stdio: 'inherit',
+  //   }
+  // );
+  // if (result.error) {
+  //   console.log(result.error);
+  //   process.exit(result.status);
+  // }
 
   console.log(
     chalk.blueBright('Installing privateKey on configuration server')

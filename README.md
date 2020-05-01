@@ -156,6 +156,19 @@ This milestone focused on provisioning cloud instances for monitor, checkbox and
 
 #### Task 1 - Provision cloud instances, monitoring control plane
 
+The command is as follows: `pipeline prod up`  
+
+The following steps are involved in this task:  
+
+* Provision 3 Virtual Machines on DigitalOcean using the API. Enable private networking and IPv6 while provisioning. Before running the prod up command, export your ssh key to the env variable `SSH_KEY` and the DigitalOcean token to the env variable `DOTOKEN`. The following are the VMs:  
+  - Monitor
+  - Checkbox
+  - iTrust
+* Copy the IP address of the provisioned VMs to an inventory file for deployment
+* Configure the Monitoring code to work on cloud VMs and to support additional metrics
+* Copy the Monitoring code on the Monitor VM and the agent code on the Checkbox and iTrust VMs
+* Configue redis conf file on the VM to allow incoming response
+* Start the dashboard and agent using forever on all the VMs
 
 #### Task 2 - Implement deployment to cloud instances
 
