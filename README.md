@@ -239,4 +239,4 @@ We have kept the agent (`Monitoring/agent/`) and dashboard (`Monitoring/dashboar
 
 #### Screencast:
 
-The screencast for Milestone 2 can be found [here](https://youtu.be/K418Rjnduoo).
+The screencast for Milestone 3 can be found [here](https://youtu.be/K418Rjnduoo).
