@@ -28,17 +28,15 @@ exports.builder = (yargs) => {
 };
 
 try {
-  const vars_file =  path.join(__dirname, "../pipeline/vars/", "vars.yml");
+  const vars_file = path.join(__dirname, '../pipeline/vars/', 'vars.yml');
 
   let fileContents = fs.readFileSync(vars_file);
   let data = yaml.safeLoad(fileContents);
 
   ansible_ip = data.ansible_ip;
-}
-catch(e) {
+} catch (e) {
   console.log(e);
 }
-
 
 exports.handler = async (argv) => {
   const { privateKey } = argv;
@@ -97,10 +95,7 @@ async function run(privateKey, username, password) {
   }
 
   console.log(chalk.blueBright('Running init script...'));
-  result = sshSync(
-    `/bakerx/pipeline/server-init.sh ${username} ${password}`,
-    `vagrant@${ansible_ip}`
-  );
+  result = sshSync(`/bakerx/pipeline/server-init.sh`, `vagrant@${ansible_ip}`);
   if (result.error) {
     console.log(result.error);
     process.exit(result.status);

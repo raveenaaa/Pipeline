@@ -14,9 +14,4 @@ sudo apt-get install ansible -y
 chmod 700 ~/.ssh/deploy_rsa
 echo "password" | tee vault_pass.txt
 
-echo export GIT_USER=$1 >> ~/.profile
-echo export GIT_PASS=$2 >> ~/.profile
-
-source ~/.profile
-
 # ansible-playbook --vault-password-file vault_pass.txt "/bakerx/pipeline/$1-playbook.yml" -i "/bakerx/pipeline/$2" -vvvv
