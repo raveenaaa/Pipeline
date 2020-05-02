@@ -187,6 +187,7 @@ The command is as follows: `pipeline setup --gh-user <github-username> --gh-pass
 The following steps are involved in this task:
 
 - Provision the configuration server `ansible-srv` and install ansible on it
+- Copy over the `ansible.cfg` file that configures ansible variables
 - Install the necessary build dependencies for iTrust and checkbox.io
 - Setup the environment variables for the git credentials to clone the iTrust repo
 
@@ -203,6 +204,8 @@ The following steps are involved in this task:
 - Copy over the artifacts from the ansible server onto the deployment server
 - Restart the webserver
 - To browser the deployed projects, visit `<ip>` for checbox.io and `<ip>:8080/iTrust2` for iTrust
+
+`ansible.cfg` takes time to take effect and hence only the second attempt to run the deploy command works.
 
 #### Task 3 - Implement canary analysis (checkbox.io preview microservice)
 
