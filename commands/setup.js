@@ -94,6 +94,14 @@ async function run(privateKey, username, password) {
     process.exit(result.status);
   }
 
+  console.log(chalk.blueBright('Copying over ansible.cfg'));
+  let cfgFile = path.join('ansible.cfg');
+  result = scpSync(cfgFile, `vagrant@${ansible_ip}:/home/vagrant/.ansible.cfg`);
+  if (result.error) {
+    console.log(result.error);
+    process.exit(result.status);
+  }
+
   console.log(chalk.blueBright('Running init script...'));
   result = sshSync(`/bakerx/pipeline/server-init.sh`, `vagrant@${ansible_ip}`);
   if (result.error) {
