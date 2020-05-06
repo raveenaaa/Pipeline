@@ -1,4 +1,4 @@
-# Pipeline > Build
+# Pipeline
 
 ## Checkpoint Report
 
@@ -6,7 +6,7 @@ A link to Milestone 1 checkpoint report can be found [here](/CHECKPOINT.md).
 A link to Milestone 2 checkpoint report can be found [here](/CHECKPOINT-M2.md).  
 A link to Milestone 3 checkpoint report can be found [here](/CHECKPOINT-M3.md).
 
-## Milestone 1 Report
+## Milestone 1: Build Report
 
 This milestone focused on building a pipeline in Jenkins using Ansible.
 
@@ -75,7 +75,7 @@ These were configured using the `blockinfile` module of ansible and the variable
 
 The screencast for Milestone 1 can be founf [here](https://www.youtube.com/watch?v=z7zuAcYShhg&feature=youtu.be).
 
-## Milestone 2 Report
+## Milestone 2: Test Report
 
 This milestone focused on building the iTrust pipeline in Jenkins using Ansible, static code analysis and implementing a test suite analysis for detecting useful tests.
 
@@ -153,7 +153,7 @@ The jenkins build job for checkbox.io was extended to include a static analysis 
 
 The screencast for Milestone 2 can be found [here](https://youtu.be/8NVG1skrCVQ).
 
-## Milestone 3 Report
+## Milestone 3: Deploy Report
 
 This milestone focused on provisioning cloud instances for monitor, checkbox and iTrust and further deploying the applications to those cloud instances. Also a canary analysis was done on the checkbox.io preview microservice.
 
